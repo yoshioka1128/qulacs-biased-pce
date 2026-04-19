@@ -21,7 +21,7 @@ def read_optimize_fast(theta0, method, J, h, n_qubits, ansatz, hamiltonian,
         cost0 = sk_cost_func_fast(J, h, spin_config)
         str_backprop = ''
         if USE_BACKPROP: str_backprop = '_backprop'
-        csv_path = f"{output_dir}/energy{str_backprop}_progress_alpha{alpha}_beta{beta}_init{iinit}.csv"
+        csv_path = f"{output_dir}/energy_progress{str_backprop}_alpha{alpha}_beta{beta}_init{iinit}.csv"
         with open(csv_path, mode='w', newline='\n', encoding='utf-8') as f:
             writer = csv.writer(f, lineterminator="\n")
             writer.writerow(['Iteration', 'Energy', 'Loss Function'])
