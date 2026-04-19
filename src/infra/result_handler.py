@@ -5,7 +5,7 @@ from power import sk_cost_func, sk_cost_func_fast
 from src.core.utils import get_binary_solution, get_binary_solution_fast, spin_to_number, convert_seconds_to_hms
 
 def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian, n_qubits, Cmin, Cmax, frob_norm, shift, n_nodes,
-                 alpha, beta, elapsed_time, iinit, iseed, verbose, LEARN, USE_BACKPROP='n'):
+                 alpha, beta, elapsed_time, iinit, verbose, LEARN, USE_BACKPROP='n'):
     loss_history = [loss for _, loss, _ in history]
     bit_history = [get_binary_solution_fast(n_nodes, p, ansatz, hamiltonian, n_qubits) for p, _, _ in history]
     cost_history = [sk_cost_func_fast(dJ, dhex, x) for x in bit_history]
@@ -48,10 +48,10 @@ def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian
     if LEARN == 0:
         str_backprop=''
         if USE_BACKPROP: str_backprop='_backprop'
-        with open(f"{output_dir}/results{str_backprop}_alpha{alpha}_beta{beta}_init{iinit}_iseed{iseed}.json", 'w') as f:
+        with open(f"{output_dir}/results{str_backprop}_alpha{alpha}_beta{beta}_init{iinit}.json", 'w') as f:
             json.dump(result_dict, f, indent=4)
 
-        with open(f'{output_dir}/energy{str_backprop}_alpha{alpha}_beta{beta}_init{iinit}_iseed{iseed}.csv', mode='w', newline='', encoding="utf-8") as f:
+        with open(f'{output_dir}/energy{str_backprop}_alpha{alpha}_beta{beta}_init{iinit}.csv', mode='w', newline='', encoding="utf-8") as f:
             writer = csv.writer(f, lineterminator="\n")
             writer.writerow(['Iteration', 'Energy', 'Loss Function'])
             for i, (c, l) in enumerate(zip(cost_history, loss_history)):

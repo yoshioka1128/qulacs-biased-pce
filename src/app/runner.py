@@ -24,7 +24,7 @@ def run(config):
     else:
         alphascs, betas = [alphasc], [beta]
 
-    output_dir, _ = setup_output_dirs(
+    output_dir = setup_output_dirs(
         config.learn, "new" if config.use_new else "old",
         config.nprob, config.ninit, it, nT, rate, m,
         type_ansatz, n_qubits, k, depth,
@@ -118,7 +118,6 @@ def run(config):
                         alpha, beta,
                         elapsed_time,
                         iinit,
-                        config.iseed,
                         config.verbose,
                         config.learn,
                         config.backprop

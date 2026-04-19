@@ -33,8 +33,4 @@ def setup_output_dirs(LEARN, mode_str, nprob, ninit, it, nT, rate, m, type_ansat
         print('alphasc', 'beta', 'problem', 'initialization', 'minimum energy', 'decimal number')
         output_dir = f'outputs/power_opt/time{it}_nT{nT}_rate{rate}_{m}nodes_{n_qubits}qubits_{k}body_ninit{ninit}_depth{depth}_{type_ansatz}_method{method}_iseed{iseed}_{mode_str}/'
         os.makedirs(output_dir, exist_ok=True)
-        csvfile = f'finalization_{m}nodes_{n_qubits}qubits_{k}body_depth{depth}_alphasc{alphasc}_beta{beta}_iseed{iseed}.csv'
-        with open(f'{output_dir}/{csvfile}', mode='w', newline='', encoding="utf-8") as f:
-            writer = csv.writer(f, lineterminator="\n")
-            writer.writerow(['alphasc', 'beta', 'problem', 'initialization', 'minimum energy', 'decimal number'])
-    return output_dir, csvfile
+    return output_dir
