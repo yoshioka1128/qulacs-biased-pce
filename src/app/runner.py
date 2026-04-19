@@ -28,7 +28,7 @@ def run(config):
         config.learn, "new" if config.use_new else "old",
         config.nprob, config.ninit, it, nT, rate, m,
         type_ansatz, n_qubits, k, depth,
-        config.method, config.iseed, alphasc, beta
+        config.method, config.iseed
     )
 
     ansatz = select_ansatz(type_ansatz, n_qubits, depth)
@@ -47,7 +47,7 @@ def run(config):
 
         read_file = os.path.join(
             output_dir,
-            f"progress_alpha{alpha}_beta{beta}_init{iinit}_iseed{config.iseed}.json"
+            f"progress_alphasc{alphasc}_beta{beta}_init{iinit}_iseed{config.iseed}.json"
         )
 
         with open(read_file, "r") as f:
@@ -115,7 +115,7 @@ def run(config):
                         Cmin, Cmax,
                         frob_norm, shift,
                         m,
-                        alpha, beta,
+                        alphasc, beta,
                         elapsed_time,
                         iinit,
                         config.verbose,
