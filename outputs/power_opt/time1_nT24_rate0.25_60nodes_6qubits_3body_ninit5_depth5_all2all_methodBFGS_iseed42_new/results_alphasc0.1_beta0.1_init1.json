@@ -129,19 +129,19 @@
         -0.16935058935756417
     ],
     "Number for Minimum Energy": 791541721535496852,
-    "Elapsed Time [seconds]": 23.419798851013184,
+    "Elapsed Time [seconds]": 27.51731514930725,
     "Elapsed Time [hours, minutes, seconds]": [
         0,
         0,
-        23.42
+        27.52
     ],
-    "Current function value": -0.575396615680178,
-    "Iterations": 377,
+    "Current function value": -0.5753966158407794,
+    "Iterations": 378,
     "Function Evaluations, Estimation": [
-        51408,
-        51408
+        51544,
+        51544
     ],
-    "Gradient Evaluations": 378,
+    "Gradient Evaluations": 379,
     "Number of Parameters": 135,
     "Minimum Parameters": [
         1.1996357113696663,

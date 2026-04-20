@@ -1,7 +1,17 @@
 # src/domain/loss.py
-
 import numpy as np
 from qulacs import QuantumState
+
+# =========================
+# Core loss
+# =========================
+def compute_loss(J, h, n_qubits, theta, ansatz, hamiltonian, alpha, beta, bias=None):
+    exp_value = _compute_expectation(n_qubits, theta, ansatz, hamiltonian)
+    z = alpha * exp_value + (bias if bias is not None else 0.0)
+    x = np.tanh(z)
+    energy = _compute_energy(J, h, x, beta)
+    return energy, exp_value
+
 
 def power_loss_func_bias(J, h, n_qubits, para, bias, ansatz, hamiltonian, alpha, beta):
     exp_value = _compute_expectation(n_qubits, para, ansatz, hamiltonian)
