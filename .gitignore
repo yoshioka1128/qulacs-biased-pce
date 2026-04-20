@@ -1,3 +1,11 @@
-**/__pycache__/
 *.pyc
+__pycache__/
+**/.ipynb_checkpoints/
+*.egg-info
+logs/*.txt
+build/
+.DS_Store
+outputs/power_opt/numpy_param/dJ*7286*.npy
+outputs/power_opt/numpy_param/dJ*10296*.npy
+
 
