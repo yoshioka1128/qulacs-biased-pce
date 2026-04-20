@@ -2,12 +2,18 @@ import json
 import csv
 import numpy as np
 from power import sk_cost_func, sk_cost_func_fast
-from src.core.utils import get_binary_solution, get_binary_solution_fast, spin_to_number, convert_seconds_to_hms
+from src.core.utils import get_binary_solution, spin_to_number, convert_seconds_to_hms
 
 def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian, n_qubits, Cmin, Cmax, frob_norm, shift, n_nodes,
-                 alphasc, beta, elapsed_time, iinit, verbose, LEARN, USE_BACKPROP='n'):
+                      alphasc, beta, elapsed_time, iinit, config):
+
+    verbose = config.verbose
+    LEARN = config.learn
+    USE_BACKPROP = config.backprop
+    USE_BIAS = config.bias
+
     loss_history = [loss for _, loss, _ in history]
-    bit_history = [get_binary_solution_fast(n_nodes, p, ansatz, hamiltonian, n_qubits) for p, _, _ in history]
+    bit_history = [get_binary_solution(n_nodes, p, ansatz, hamiltonian, n_qubits, USE_BIAS) for p, _, _ in history]
     cost_history = [sk_cost_func_fast(dJ, dhex, x) for x in bit_history]
     exp_history = [exp for _, _, exp in history]
     norm = lambda x: (x * frob_norm + shift - Cmin) / (Cmax - Cmin)
@@ -46,12 +52,14 @@ def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian
 
     # 出力
     if LEARN == 0:
-        str_backprop=''
-        if USE_BACKPROP: str_backprop='_backprop'
-        with open(f"{output_dir}/results{str_backprop}_alphasc{alphasc}_beta{beta}_init{iinit}.json", 'w') as f:
+        str_backprop = ''
+        str_bias = ''
+        if USE_BACKPROP: str_backprop = '_backprop'
+        if USE_BIAS: str_bias = '_bias'
+        with open(f"{output_dir}/results{str_backprop}{str_bias}_alphasc{alphasc}_beta{beta}_init{iinit}.json", 'w') as f:
             json.dump(result_dict, f, indent=4)
 
-        with open(f'{output_dir}/energy{str_backprop}_alphasc{alphasc}_beta{beta}_init{iinit}.csv', mode='w', newline='', encoding="utf-8") as f:
+        with open(f'{output_dir}/energy{str_backprop}{str_bias}_alphasc{alphasc}_beta{beta}_init{iinit}.csv', mode='w', newline='', encoding="utf-8") as f:
             writer = csv.writer(f, lineterminator="\n")
             writer.writerow(['Iteration', 'Energy', 'Loss Function'])
             for i, (c, l) in enumerate(zip(cost_history, loss_history)):

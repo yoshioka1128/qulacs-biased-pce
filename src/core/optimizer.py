@@ -1,52 +1,81 @@
 import time, json, csv
 from qulacs import ParametricQuantumCircuit, QuantumState, PauliOperator, Observable
 from scipy.optimize import minimize
-from power import power_loss_func, power_loss_func_correct, power_loss_func_fast, sk_cost_func_fast
+from power import power_loss_func_correct, sk_cost_func_fast
 from src.core.utils import spin_to_number
+from src.domain.loss.power_loss_func_fast import  power_loss_func_fast, power_loss_func_bias
 import numpy as np
 
-def read_optimize_fast(theta0, method, J, h, n_qubits, ansatz, hamiltonian,
-                       alpha, beta, verbose, Cmin, Cmax, frob_norm, shift,
-                       iinit, output_dir, USE_BACKPROP='n', maxiter=10000):
+def read_optimize_fast(theta0, config, J, h, n_qubits, k, ansatz, hamiltonian,
+                       alphasc, beta, Cmin, Cmax, frob_norm, shift,
+                       iinit, output_dir):
+    method = config.method
+    verbose = config.verbose
+    USE_BACKPROP = config.backprop
+    USE_BIAS = config.bias
+    maxiter = config.maxiter
+    alpha = alphasc * n_qubits ** np.floor(k / 2)
+
     history = []
     best_cost = None
     norm = lambda x: (x * frob_norm + shift - Cmin) / (Cmax - Cmin)
 
-    # --- Add the initial point to history so that it's never empty ---
-    loss0, exp0 = power_loss_func_fast(J, h, n_qubits, theta0, ansatz, hamiltonian, alpha, beta)
+    # --- 勾配（Jacobian）関数 ---
+    
+    if USE_BIAS:
+        def loss(params):
+            theta = params[:-1]   # 最後以外がtheta
+            bias = params[-1]     # 最後がbias
+            loss, _ = power_loss_func_bias(J, h, n_qubits, theta, bias, ansatz, hamiltonian, alpha, beta)
+            return loss
+
+        bias0 = 0.0
+        theta = np.concatenate([theta0, [bias0]])
+        if USE_BACKPROP:
+            def gradient(params):
+                grad = backprop(params, n_qubits, len(h), ansatz=ansatz,
+                                W=J, h=h, hamiltonian=hamiltonian, alpha=alpha, beta=beta, nu=1.0)
+                return grad.flatten()
+        else:
+            gradient=None
+        loss0, exp0 = power_loss_func_bias(J, h, n_qubits, theta0, bias0, ansatz, hamiltonian, alpha, beta)
+        history = [(theta0.copy(), loss0, exp0)]
+    else:
+        def loss(params):
+            loss, _ = power_loss_func_fast(J, h, n_qubits, params, ansatz, hamiltonian, alpha, beta)
+            return loss
+
+        theta = theta0
+        if USE_BACKPROP:
+            def gradient(params):
+                grad = backprop(params, n_qubits, len(h), ansatz=ansatz,
+                                W=J, h=h, hamiltonian=hamiltonian, alpha=alpha, beta=beta, nu=1.0)
+                return grad.flatten()
+        else:
+            gradient=None
+        loss0, exp0 = power_loss_func_fast(J, h, n_qubits, theta0, ansatz, hamiltonian, alpha, beta)
     history = [(theta0.copy(), loss0, exp0)]
-    # -----------------------------------------------------------------
+
     if verbose:
         spin_config = np.sign(exp0)
         cost0 = sk_cost_func_fast(J, h, spin_config)
         str_backprop = ''
+        str_bias = ''
         if USE_BACKPROP: str_backprop = '_backprop'
-        csv_path = f"{output_dir}/energy_progress{str_backprop}_alpha{alpha}_beta{beta}_init{iinit}.csv"
+        if USE_BIAS: str_backprop = '_bias'
+        csv_path = f"{output_dir}/energy_progress{str_backprop}{str_bias}_alphasc{alphasc}_beta{beta}_init{iinit}.csv"
         with open(csv_path, mode='w', newline='\n', encoding='utf-8') as f:
             writer = csv.writer(f, lineterminator="\n")
             writer.writerow(['Iteration', 'Energy', 'Loss Function'])
             writer.writerow([0, norm(cost0), norm(loss0)])
         print(f"[Init] loss={norm(loss0):.6f}")
 
-    def cost(params):
-        loss, _ = power_loss_func_fast(J, h, n_qubits, params, ansatz, hamiltonian, alpha, beta)
-        return loss
-
-    # --- 勾配（Jacobian）関数 ---
-    def gradient(params):
-        """
-        backprop() を用いて ∂loss/∂params を計算
-        """
-        # MaxCutの場合、hamiltonian は重み行列 W に対応
-        # alpha, beta, nu のようなパラメータは上位から渡す
-        # 以下は backprop の呼び出しに合わせて調整してください
-        grad = backprop(params, n_qubits, len(h), ansatz=ansatz,
-                        W=J, h=h, hamiltonian=hamiltonian, alpha=alpha, beta=beta, nu=1.0)
-        return grad.flatten()
-
     def callback(xk):
         nonlocal best_cost
-        loss, exp_val = power_loss_func_fast(J, h, n_qubits, xk, ansatz, hamiltonian, alpha, beta)
+        if USE_BIAS:
+            loss, exp_val = power_loss_func_bias(J, h, n_qubits, xk[:-1], xk[-1], ansatz, hamiltonian, alpha, beta)
+        else:
+            loss, exp_val = power_loss_func_fast(J, h, n_qubits, xk, ansatz, hamiltonian, alpha, beta)
         history.append((xk.copy(), loss, exp_val))
         if verbose:
             spin_config = np.sign(exp_val)
@@ -64,47 +93,21 @@ def read_optimize_fast(theta0, method, J, h, n_qubits, ansatz, hamiltonian,
                     "parameters": xk.tolist(),
                     "number for cost": int(spin_to_number(spin_config)),
                 }
-                with open(f"{output_dir}/progress{str_backprop}_alpha{alpha}_beta{beta}_init{iinit}.json", "w") as f:
+                with open(f"{output_dir}/progress{str_backprop}{str_bias}_alphasc{alphasc}_beta{beta}_init{iinit}.json", "w") as f:
                     json.dump(log_data, f, indent=2)
             with open(csv_path, mode='a', newline='\n', encoding='utf-8') as f:
                 writer = csv.writer(f, lineterminator="\n")
                 writer.writerow([len(history)-1, norm_cost, norm_loss])
 
     start_time = time.time()
-    # bounds = [(-2.0*np.pi, 4.0*np.pi) for i in range(len(theta0))]
-    if USE_BACKPROP:
-        result = minimize(cost, theta0, jac=gradient, callback=callback, method=method,
-                          options={"disp": verbose, "maxiter": maxiter})
-    else:
-        result = minimize(cost, theta0, callback=callback, method=method, #bounds = bounds, # BFGS or SLSQP
-                          options={"disp": verbose, "maxiter": maxiter}) # default gtol = 1e-5 in BFGS
+    result = minimize(loss, theta, jac=gradient, callback=callback, method=method,
+                      options={"disp": verbose, "maxiter": maxiter})
 
     end_time = time.time()
     elapsed_time = end_time - start_time
 
     return result, history, elapsed_time
 
-
-def Each_layer(circuit, parameters, i, n):
-
-    # This is to implement the single-qubit rotation gates.
-    for j in range(n):
-        circuit.add_parametric_RX_gate(j,parameters[i*int(n*(n+3)/2)+j])
-    for j in range(n):
-        circuit.add_parametric_RZ_gate(j,parameters[i*int(n*(n+3)/2)+n+j])
-
-    # This is to implement all-to-all R_zz gates.
-    temp = 0
-    for j in range(n):
-        for k in range(j):
-            circuit.add_CNOT_gate(j,k)
-            circuit.add_parametric_RZ_gate(k,parameters[i*int(n*(n+3)/2)+2*n+temp])
-            circuit.add_CNOT_gate(j,k)
-            temp = temp + 1
-
-    return circuit
-
-# The following function is to calculate the gradient using back propagation method.
 def backprop(parameters, n, m, ansatz, W, h, hamiltonian, alpha, beta, nu):
     layer = ansatz.depth
     p = len(parameters)
@@ -162,11 +165,4 @@ def backprop(parameters, n, m, ansatz, W, h, hamiltonian, alpha, beta, nu):
     # --- 結果を numpy 配列へ ---
     backprop_array = np.asarray(g, dtype=float)
 
-#    for j in range(m):
-#        grad = ansatz.backprop(hamiltonian.get_term(j))
-#        for i in range(p):
-#            dEi_dthetaj[j,i] = grad[i]
-#    backprop_array = np.dot(dL_dEi, dEi_dthetaj)
-
-    
     return backprop_array

@@ -43,7 +43,6 @@ def run(config):
     if config.readmode:
         ninit2 = 1
         iinit = 0
-        alpha = alphasc * n_qubits ** np.floor(k / 2)
 
         read_file = os.path.join(
             output_dir,
@@ -88,20 +87,8 @@ def run(config):
                     )
 
                     result, history, elapsed_time = read_optimize_fast(
-                        theta0,
-                        config.method,
-                        dJ, dhex,
-                        n_qubits,
-                        ansatz,
-                        pce,
-                        alpha, beta,
-                        config.verbose,
-                        Cmin, Cmax,
-                        frob_norm, shift,
-                        iinit,
-                        output_dir,
-                        config.backprop,
-                        config.maxiter
+                        theta0, config, dJ, dhex, n_qubits, k, ansatz,
+                        pce, alphasc, beta, Cmin, Cmax, frob_norm, shift, iinit, output_dir,
                     )
 
                     mineng, minnum = save_results_fast(
@@ -118,9 +105,7 @@ def run(config):
                         alphasc, beta,
                         elapsed_time,
                         iinit,
-                        config.verbose,
-                        config.learn,
-                        config.backprop
+                        config,
                     )
 
                     print(alphasc, beta, iprob, iinit, mineng, minnum)

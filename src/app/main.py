@@ -13,8 +13,10 @@ def main():
         verbose=1,
         maxiter=10000,
         readmode=False,
-        backprop=True,
-#        backprop=False,
+#        backprop=True,
+        backprop=False,
+#        bias=False,
+        bias=True,
     )
 
     run(config)

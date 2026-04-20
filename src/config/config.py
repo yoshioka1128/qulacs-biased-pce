@@ -13,3 +13,4 @@ class Config:
     maxiter: int = 10000
     readmode: bool = False
     backprop: bool = False
+    bias: bool = False

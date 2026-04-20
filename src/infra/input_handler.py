@@ -2,17 +2,17 @@ import os, csv
 import numpy as np
 
 def get_user_input():
-    n_qubits = int(input("Number of qubits (4): ") or 4)
-    k = int(input("Interaction order k (2): ") or 2)
-    m = int(input("Number of nodes (18): ") or 18)
+    n_qubits = int(input("Number of qubits (6): ") or 6)
+    k = int(input("Interaction order k (3): ") or 3)
+    m = int(input("Number of nodes (60): ") or 60)
     depth0 = int(m/(n_qubits*(n_qubits-1)/2.0 + n_qubits*2.0)) # m ~ nparam
     depth = int(input("Circuit depth (5): ") or max(5, depth0))
-    alphasc = float(input("alphasc (e.g., 1.5, coeffient for n_qubits**np.floor(k/2)): ") or 1.5)
+    alphasc = float(input("alphasc (e.g., 1.5, coeffient for n_qubits**np.floor(k/2)): ") or 0.1)
     beta = float(input("beta (0.0): ") or 0.1)
     type_ansatz = str(input("Type ansatz (all2all): ").strip() or 'all2all')
     itime = int(input("Time of DR request (1): ") or 1)
     nT = int(input("Time step (24): ") or 24)
-    rate = float(input("procurement rate (0.5): ") or 0.5)
+    rate = float(input("procurement rate (0.25): ") or 0.25)
     print('depth: ', depth)
 
     return itime, nT, rate, n_qubits, k, m, depth, alphasc, beta, type_ansatz

@@ -16,30 +16,12 @@ def convert_seconds_to_hms(seconds):
     return hours, minutes, seconds
 
 # plot optimization process
-def get_binary_solution(graph, para, ansatz, hamiltonian, n_qubits):
-    # Get the number of nodes in the graph
-    n_nodes = graph.number_of_nodes()
+def get_binary_solution(n_nodes, para, ansatz, hamiltonian, n_qubits, USE_BINARY=False):
 
     # Set the ansatz parameters and update the quantum state
-    ansatz.set_parameter(para)
-    state = QuantumState(n_qubits)
-    ansatz.update_quantum_state(state)
-
-    # Compute the expectation values for each term in the Hamiltonian
-    exp_value = np.zeros(n_nodes)
-    for i in range(hamiltonian.get_term_count()):
-        h_term = hamiltonian.get_term(i)
-        exp_value[i] = h_term.get_expectation_value(state).real
-
-    # Convert the expectation values to binary values (using sign function)
-    binary_solution = np.sign(exp_value)
-
-    return binary_solution
-
-def get_binary_solution_fast(n_nodes, para, ansatz, hamiltonian, n_qubits):
-
-    # Set the ansatz parameters and update the quantum state
-    ansatz.set_parameter(para)
+    if USE_BINARY: theta = para[:-1]
+    else: theta = para
+    ansatz.set_parameter(theta)
     state = QuantumState(n_qubits)
     ansatz.update_quantum_state(state)
 
