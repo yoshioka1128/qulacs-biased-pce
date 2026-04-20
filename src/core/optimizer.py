@@ -139,7 +139,6 @@ def read_optimize_fast(
         # ---- append csv ----
         with open(csv_path, "a", newline="", encoding="utf-8") as f:
             writer = csv.writer(f, lineterminator="\n")
-            writer = csv.writer(f)
             writer.writerow([len(history)-1, norm_cost, norm_loss])
 
     # =========================

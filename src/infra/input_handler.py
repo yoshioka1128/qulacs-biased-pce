@@ -1,21 +1,52 @@
 import os, csv
 import numpy as np
+from src.config.node_config import NODE_CONFIG
 
 def get_user_input():
-    n_qubits = int(input("Number of qubits (6): ") or 6)
-    k = int(input("Interaction order k (3): ") or 3)
+    # --- m入力 ---
     m = int(input("Number of nodes (60): ") or 60)
-    depth0 = int(m/(n_qubits*(n_qubits-1)/2.0 + n_qubits*2.0)) # m ~ nparam
-    depth = int(input("Circuit depth (5): ") or max(5, depth0))
-    alphasc = float(input("alphasc (e.g., 1.5, coeffient for n_qubits**np.floor(k/2)): ") or 0.1)
-    beta = float(input("beta (0.0): ") or 0.1)
+
+    if m not in NODE_CONFIG:
+        raise ValueError(f"Unsupported m={m}. Available: {list(NODE_CONFIG.keys())}")
+
+    cfg = NODE_CONFIG[m]
+
+    # --- NODE_CONFIGから取得（デフォルト） ---
+    n_qubits_default = cfg.n_qubits
+    k_default = cfg.k
+    depth_default = cfg.depth
+    alphasc_default = cfg.alphasc
+    beta_default = cfg.beta
+
+    # --- 上書き可能にする ---
+    n_qubits = int(input(f"Number of qubits ({n_qubits_default}): ") or n_qubits_default)
+    k = int(input(f"Interaction order k ({k_default}): ") or k_default)
+
+    # depthはm, n_qubitsに依存するので再計算も可能
+    depth0 = int(m / (n_qubits*(n_qubits-1)/2.0 + n_qubits*2.0))
+    depth = int(input(f"Circuit depth ({depth_default}): ") or max(depth_default, depth0))
+
+    alphasc = float(input(f"alphasc ({alphasc_default}): ") or alphasc_default)
+    beta = float(input(f"beta ({beta_default}): ") or beta_default)
+
+    # --- その他 ---
     type_ansatz = str(input("Type ansatz (all2all): ").strip() or 'all2all')
     itime = int(input("Time of DR request (1): ") or 1)
     nT = int(input("Time step (24): ") or 24)
     rate = float(input("procurement rate (0.25): ") or 0.25)
-    print('depth: ', depth)
 
-    return itime, nT, rate, n_qubits, k, m, depth, alphasc, beta, type_ansatz
+    return {
+        "itime": itime,
+        "nT": nT,
+        "rate": rate,
+        "n_qubits": n_qubits,
+        "k": k,
+        "m": m,
+        "depth": depth,
+        "alphasc": alphasc,
+        "beta": beta,
+        "type_ansatz": type_ansatz,
+    }
 
 def setup_output_dirs(LEARN, mode_str, nprob, ninit, it, nT, rate, m, type_ansatz, n_qubits, k, depth, method, iseed):
     if LEARN:

@@ -14,10 +14,18 @@ from src.core.optimizer import read_optimize_fast
 
 def run(config):
     rng = np.random.default_rng(config.iseed)
-
-    # user input（ここだけ残す or 後でCLI化）
-    it, nT, rate, n_qubits, k, m, depth, alphasc, beta, type_ansatz = get_user_input()
-
+    params = get_user_input()
+    it = params['itime']
+    nT = params['nT']
+    rate = params['rate']
+    n_qubits = params["n_qubits"]
+    k = params['k']
+    m = params['m']
+    depth = params["depth"]
+    alphasc = params['alphasc']
+    beta = params['beta']
+    type_ansatz = params["type_ansatz"]
+    
     if config.learn:
         alphascs = [0.01, 0.1, 0.5, 1.0, 1.5]
         betas = [-2.0, -1.0, 0.0, 1.0, 2.0]
