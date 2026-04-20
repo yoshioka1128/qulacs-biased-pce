@@ -1,25 +1,35 @@
-# main.py
-from src.config.config import Config
+import argparse
 from src.app.runner import run
+from src.config.config import Config
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--m", type=int, default=60)
+    parser.add_argument("--batch", action="store_true")
+    parser.add_argument("--itime", type=int, default=1)
+    parser.add_argument("--nT", type=int, default=24)
+    parser.add_argument("--rate", type=float, default=0.25)
+
+    # 上書き用（任意）
+    parser.add_argument("--n_qubits", type=int)
+    parser.add_argument("--k", type=int)
+    parser.add_argument("--depth", type=int)
+    parser.add_argument("--alphasc", type=float)
+    parser.add_argument("--beta", type=float)
+    parser.add_argument("--type_ansatz", type=str, default="all2all")
+
+   
+    return parser.parse_args()
+
 
 def main():
-    config = Config(
-        use_new=True,
-        learn=False,
-        nprob=1,
-        ninit=5,
-        iseed=42,
-        method="BFGS",
-        verbose=1,
-        maxiter=10000,
-        readmode=False,
-        backprop=True,
-        bias=True,
-#        backprop=False,
-#        bias=False,
-    )
+    args = parse_args()
+    config = Config()
 
-    run(config)
+    run(config, args)
+
 
 if __name__ == "__main__":
     main()

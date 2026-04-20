@@ -3,7 +3,7 @@ from power_opt import param_PCE, read_param
 from power import sk_cost_func
 from src.core.utils import prepare_int_from_d, qubo2ising_correct
 from param_enemane.data_loader import load_power_data, load_covariance_matrix
-from gurobi_energy_mathopt.data_loader import load_selected_originals
+#from gurobi_energy_mathopt.data_loader import load_selected_originals
 import pandas as pd
 import gurobipy as gp
 import gurobi_energy_mathopt.preprocessing as pre
@@ -65,46 +65,56 @@ def prepare_int(graph_type, m, it, nT, rate, rng, USE_NEW, iseed=42,
                 consumer_list=None,
                 gurobi_result=None,
                 sigma=None, Pt_ex=None, proc=None):
+    _ = get_random_consumers(m, rng).tolist() # tempolary added for consistency of rng 
+
     Cmin = None
     Cmax = None
     if graph_type != "power_opt":
         raise ValueError
 
     # backward compatibility
-    if consumer_list is None:
-        consumer_list = get_random_consumers(m, rng).tolist()
+#    if consumer_list is None:
+#        consumer_list = get_random_consumers(m, rng).tolist()
 
     if gurobi_result is not None:
         row = gurobi_result.loc[gurobi_result["hour"] == it]
         Cmin = row["obj_val_min"].iloc[0]
         Cmax = row["obj_val_max"].iloc[0]
         frob_norm = row["frobenius_norm"].iloc[0]
-    else:
-        frob_norm, shift, dJ, dhex = prepare_int_from_d(
-            consumer_list=consumer_list,
-            m=m,
-            it=it,
-            nT=nT,
-            rate=rate
-        )
 
-        # ★追加：最低限のダミー or ちゃんと計算
-        sigma, Pt_ex, proc = gurobi_utils.load_covariance_and_expectation(
-            USE_NEW, consumer_list, it, nT, rate
-        )
+    frob_norm, shift, dJ, dhex = prepare_int_from_d(
+        consumer_list=consumer_list,
+        m=m,
+        it=it,
+        nT=nT,
+        rate=rate
+    )
 
-        model = gurobi_utils.electric_power_demand_portfolio(
-            m, sigma, Pt_ex, proc, None, nT, False, sense=gp.GRB.MINIMIZE
-        )
-        model.optimize()
-
-        model_max = gurobi_utils.electric_power_demand_portfolio(
-            m, sigma, Pt_ex, proc, None, nT, False, sense=gp.GRB.MAXIMIZE
-        )
-        model_max.optimize()
-
-        Cmin = model.ObjVal
-        Cmax = model_max.ObjVal
+#    else:
+#        frob_norm, shift, dJ, dhex = prepare_int_from_d(
+#            consumer_list=consumer_list,
+#            m=m,
+#            it=it,
+#            nT=nT,
+#            rate=rate
+#        )
+#
+#        sigma, Pt_ex, proc = gurobi_utils.load_covariance_and_expectation(
+#            USE_NEW, consumer_list, it, nT, rate
+#        )
+#
+#        model = gurobi_utils.electric_power_demand_portfolio(
+#            m, sigma, Pt_ex, proc, None, nT, False, sense=gp.GRB.MINIMIZE
+#        )
+#        model.optimize()
+#
+#        model_max = gurobi_utils.electric_power_demand_portfolio(
+#            m, sigma, Pt_ex, proc, None, nT, False, sense=gp.GRB.MAXIMIZE
+#        )
+#        model_max.optimize()
+#
+#        Cmin = model.ObjVal
+#        Cmax = model_max.ObjVal
 
     return dJ, dhex, Cmin, Cmax, frob_norm, shift, consumer_list
 #def prepare_int(graph_type, m, it, nT, rate, rng, USE_NEW, iseed=42):
