@@ -11,6 +11,7 @@ DATA_DIR = BASE_DIR / "outputs" / "power_opt" / \
     "time1_nT24_rate0.2_60nodes_6qubits_3body_ninit5_depth5_all2all_methodBFGS_iseed42_new"
 #    "time1_nT24_rate0.2_18nodes_4qubits_2body_ninit5_depth5_all2all_methodBFGS_iseed42_new"
 
+
 # 保存先（指定通り）
 SAVE_DIR = BASE_DIR / "outputs" / "power_opt" / "figures"
 SAVE_DIR.mkdir(parents=True, exist_ok=True)
@@ -157,7 +158,7 @@ for beta in target_betas:
 
 plt.xlabel("alphasc")
 plt.ylabel("Energy")
-plt.ylim(0.0, 0.003)
+plt.ylim(0.0, 0.002)
 plt.title("Energy comparison (bias vs no bias)")
 plt.legend()
 plt.grid()
