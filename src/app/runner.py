@@ -40,7 +40,7 @@ def run(config, args):
         run_single(config, params, alphasc, beta)
 
 def run_batch(config, params):
-    beta_list = [-0.1, 0.0, 0.1, 0.2]
+    beta_list = [0.5, 1.0, 1.5, 2.0]
     alpha_list = [0.1, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
 
     for beta, alphasc in itertools.product(beta_list, alpha_list):
