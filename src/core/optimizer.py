@@ -17,8 +17,8 @@ def read_optimize_fast(
     # ---- config ----
     method = config.method
     verbose = config.verbose
-    use_backprop = config.backprop
-    use_bias = config.bias
+    USE_BACKPROP = config.backprop
+    USE_BIAS = config.bias
     maxiter = config.maxiter
 
     alpha = alphasc * n_qubits ** np.floor(k / 2)
@@ -29,12 +29,12 @@ def read_optimize_fast(
     # Parameter handling
     # =========================
     def split_params(params):
-        if use_bias:
+        if USE_BIAS:
             return params[:-1], params[-1]
         return params, None
 
     def merge_params(theta, bias):
-        if use_bias:
+        if USE_BIAS:
             return np.concatenate([theta, [bias]])
         return theta
 
@@ -49,7 +49,7 @@ def read_optimize_fast(
         return loss
 
     def grad_fn(params):
-        if not use_backprop:
+        if not USE_BACKPROP:
             return None
         grad = backprop(
             params,
@@ -62,7 +62,7 @@ def read_optimize_fast(
             alpha=alpha,
             beta=beta,
             nu=1.0,
-            use_bias=use_bias   # ← ★これ必須
+            USE_BIAS=USE_BIAS   # ← ★これ必須
         )
         return grad.flatten()
 
@@ -73,9 +73,9 @@ def read_optimize_fast(
     best_cost = None
 
     suffix = []
-    if use_backprop:
+    if USE_BACKPROP:
         suffix.append("backprop")
-    if use_bias:
+    if USE_BIAS:
         suffix.append("bias")
     suffix = "_" + "_".join(suffix) if suffix else ""
 
@@ -86,7 +86,7 @@ def read_optimize_fast(
     theta, bias = split_params(theta_init)
     loss0, exp0 = compute_loss(J, h, n_qubits, theta, ansatz, hamiltonian, alpha, beta, bias)
 
-    if use_bias:
+    if USE_BIAS:
         history.append((theta.copy(), loss0, exp0, bias))
     else:
         history.append((theta.copy(), loss0, exp0))
@@ -99,7 +99,7 @@ def read_optimize_fast(
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f, lineterminator="\n")
 
-            if use_bias:
+            if USE_BIAS:
                 writer.writerow(["Iteration", "Energy", "Loss Function", "Bias"])
                 writer.writerow([0, norm(cost0), norm(loss0), bias])
             else:
@@ -117,7 +117,7 @@ def read_optimize_fast(
         theta, bias = split_params(params)
         loss, exp_val = compute_loss(J, h, n_qubits, theta, ansatz, hamiltonian, alpha, beta, bias)
 
-        if use_bias:
+        if USE_BIAS:
             history.append((params.copy(), loss, exp_val, bias))
         else:
             history.append((params.copy(), loss, exp_val))
@@ -154,7 +154,7 @@ def read_optimize_fast(
         with open(csv_path, "a", newline="", encoding="utf-8") as f:
             writer = csv.writer(f, lineterminator="\n")
 
-            if use_bias:
+            if USE_BIAS:
                 writer.writerow([len(history)-1, norm_cost, norm_loss, bias])
             else:
                 writer.writerow([len(history)-1, norm_cost, norm_loss])
@@ -167,7 +167,7 @@ def read_optimize_fast(
     result = minimize(
         loss_fn,
         theta_init,
-        jac=grad_fn if use_backprop else None,
+        jac=grad_fn if USE_BACKPROP else None,
         callback=callback,
         method=method,
         options={"disp": verbose, "maxiter": maxiter},
@@ -177,10 +177,10 @@ def read_optimize_fast(
 
     return result, history, elapsed
 
-def backprop(parameters, n, m, ansatz, W, h, hamiltonian, alpha, beta, nu, use_bias=False):
+def backprop(parameters, n, m, ansatz, W, h, hamiltonian, alpha, beta, nu, USE_BIAS=False):
     layer = ansatz.depth
 
-    if use_bias:
+    if USE_BIAS:
         theta = parameters[:-1]
         bias = parameters[-1]
     else:
@@ -243,7 +243,7 @@ def backprop(parameters, n, m, ansatz, W, h, hamiltonian, alpha, beta, nu, use_b
     # =========================
     # bias 勾配（追加）
     # =========================
-    if use_bias:
+    if USE_BIAS:
         dL_dbias = 0.0
 
         # Interaction term
