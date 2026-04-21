@@ -9,8 +9,8 @@ class Config:
     ninit: int = 5
     iseed: int = 42
     method: str = "BFGS"
-    verbose: int = 1
+    verbose: int = 0
     maxiter: int = 10000
     readmode: bool = False
-    backprop: bool = False
+    backprop: bool = True
     bias: bool = False

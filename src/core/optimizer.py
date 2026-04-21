@@ -85,7 +85,11 @@ def read_optimize_fast(
     # ---- initial evaluation ----
     theta, bias = split_params(theta_init)
     loss0, exp0 = compute_loss(J, h, n_qubits, theta, ansatz, hamiltonian, alpha, beta, bias)
-    history.append((theta.copy(), loss0, exp0))
+
+    if use_bias:
+        history.append((theta.copy(), loss0, exp0, bias))
+    else:
+        history.append((theta.copy(), loss0, exp0))
 
     if verbose:
         spin_config = np.sign(exp0)
@@ -93,8 +97,13 @@ def read_optimize_fast(
 
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f, lineterminator="\n")
-            writer.writerow(["Iteration", "Energy", "Loss Function"])
-            writer.writerow([0, norm(cost0), norm(loss0)])
+
+            if use_bias:
+                writer.writerow(["Iteration", "Energy", "Loss Function", "Bias"])
+                writer.writerow([0, norm(cost0), norm(loss0), bias])
+            else:
+                writer.writerow(["Iteration", "Energy", "Loss Function"])
+                writer.writerow([0, norm(cost0), norm(loss0)])
 
         print(f"[Init] loss={norm(loss0):.6f}")
 
@@ -106,7 +115,11 @@ def read_optimize_fast(
 
         theta, bias = split_params(params)
         loss, exp_val = compute_loss(J, h, n_qubits, theta, ansatz, hamiltonian, alpha, beta, bias)
-        history.append((params.copy(), loss, exp_val))
+
+        if use_bias:
+            history.append((params.copy(), loss, exp_val, bias))
+        else:
+            history.append((params.copy(), loss, exp_val))
 
         if not verbose:
             return
@@ -139,7 +152,11 @@ def read_optimize_fast(
         # ---- append csv ----
         with open(csv_path, "a", newline="", encoding="utf-8") as f:
             writer = csv.writer(f, lineterminator="\n")
-            writer.writerow([len(history)-1, norm_cost, norm_loss])
+
+            if use_bias:
+                writer.writerow([len(history)-1, norm_cost, norm_loss, bias])
+            else:
+                writer.writerow([len(history)-1, norm_cost, norm_loss])
 
     # =========================
     # Run optimization

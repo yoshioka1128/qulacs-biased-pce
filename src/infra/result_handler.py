@@ -12,10 +12,18 @@ def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian
     USE_BACKPROP = config.backprop
     USE_BIAS = config.bias
 
-    loss_history = [loss for _, loss, _ in history]
-    bit_history = [get_binary_solution(n_nodes, p, ansatz, hamiltonian, n_qubits, USE_BIAS) for p, _, _ in history]
+    loss_history = [h[1] for h in history]
+    exp_history  = [h[2] for h in history]
+    bit_history  = [
+        get_binary_solution(n_nodes, h[0], ansatz, hamiltonian, n_qubits, USE_BIAS)
+        for h in history
+    ]
+    if USE_BIAS: bias_history = [h[3] for h in history]
+    
+#    loss_history = [loss for _, loss, _ in history]
+#    bit_history = [get_binary_solution(n_nodes, p, ansatz, hamiltonian, n_qubits, USE_BIAS) for p, _, _ in history]
+#    exp_history = [exp for _, _, exp in history]
     cost_history = [sk_cost_func_fast(dJ, dhex, x) for x in bit_history]
-    exp_history = [exp for _, _, exp in history]
     norm = lambda x: (x * frob_norm + shift - Cmin) / (Cmax - Cmin)
     min_idx = int(np.argmin(cost_history))
     min_params = history[min_idx][0]
@@ -61,8 +69,14 @@ def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian
 
         with open(f'{output_dir}/energy{str_backprop}{str_bias}_alphasc{alphasc}_beta{beta}_init{iinit}.csv', mode='w', newline='', encoding="utf-8") as f:
             writer = csv.writer(f, lineterminator="\n")
-            writer.writerow(['Iteration', 'Energy', 'Loss Function'])
-            for i, (c, l) in enumerate(zip(cost_history, loss_history)):
-                writer.writerow([i, norm(c), norm(l)])
+
+            if USE_BIAS:
+                writer.writerow(['Iteration', 'Energy', 'Loss Function', 'Bias'])
+                for i, (c, l, b) in enumerate(zip(cost_history, loss_history, bias_history)):
+                    writer.writerow([i, norm(c), norm(l), b])
+            else:
+                writer.writerow(['Iteration', 'Energy', 'Loss Function'])
+                for i, (c, l) in enumerate(zip(cost_history, loss_history)):
+                    writer.writerow([i, norm(c), norm(l)])
 
     return mineng, minnum
