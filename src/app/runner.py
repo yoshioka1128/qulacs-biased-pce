@@ -164,6 +164,7 @@ def run_single(config, params, alphasc, beta):
                         ansatz,
                         pce,
                         n_qubits,
+                        k,
                         Cmin, Cmax,
                         frob_norm, shift,
                         m,

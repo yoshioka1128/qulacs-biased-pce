@@ -4,7 +4,7 @@ import numpy as np
 from power import sk_cost_func, sk_cost_func_fast
 from src.core.utils import get_binary_solution, spin_to_number, convert_seconds_to_hms
 
-def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian, n_qubits, Cmin, Cmax, frob_norm, shift, n_nodes,
+def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian, n_qubits, k, Cmin, Cmax, frob_norm, shift, n_nodes,
                       alphasc, beta, elapsed_time, iinit, config):
 
     verbose = config.verbose
@@ -14,8 +14,9 @@ def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian
 
     loss_history = [h[1] for h in history]
     exp_history  = [h[2] for h in history]
+    alpha = alphasc * n_qubits ** np.floor(k / 2)
     bit_history  = [
-        get_binary_solution(n_nodes, h[0], ansatz, hamiltonian, n_qubits, USE_BIAS)
+        get_binary_solution(n_nodes, h[0], ansatz, hamiltonian, n_qubits, USE_BIAS, alpha)
         for h in history
     ]
     if USE_BIAS: bias_history = [h[3] for h in history]

@@ -16,11 +16,15 @@ def convert_seconds_to_hms(seconds):
     return hours, minutes, seconds
 
 # plot optimization process
-def get_binary_solution(n_nodes, para, ansatz, hamiltonian, n_qubits, USE_BIAS=False):
+def get_binary_solution(n_nodes, para, ansatz, hamiltonian, n_qubits, USE_BIAS=False, alpha=1.0):
 
     # Set the ansatz parameters and update the quantum state
-    if USE_BIAS: theta = para[:-1]
-    else: theta = para
+    if USE_BIAS:
+        theta = para[:-1]
+        bias = para[-1]
+    else:
+        theta = para
+        bias = None
     ansatz.set_parameter(theta)
     state = QuantumState(n_qubits)
     ansatz.update_quantum_state(state)
@@ -32,7 +36,8 @@ def get_binary_solution(n_nodes, para, ansatz, hamiltonian, n_qubits, USE_BIAS=F
         exp_value[i] = h_term.get_expectation_value(state).real
 
     # Convert the expectation values to binary values (using sign function)
-    binary_solution = np.sign(exp_value)
+    z = alpha * exp_value + (bias if bias is not None else 0.0)
+    binary_solution = np.sign(z)
 
     return binary_solution
 

@@ -92,7 +92,8 @@ def read_optimize_fast(
         history.append((theta.copy(), loss0, exp0))
 
     if verbose:
-        spin_config = np.sign(exp0)
+        z = alpha * exp0 + (bias if bias is not None else 0.0)
+        spin_config = np.sign(z)
         cost0 = sk_cost_func_fast(J, h, spin_config)
 
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
@@ -123,8 +124,8 @@ def read_optimize_fast(
 
         if not verbose:
             return
-
-        spin_config = np.sign(exp_val)
+        z = alpha * exp_val + (bias if bias is not None else 0.0)
+        spin_config = np.sign(z)
         cost = sk_cost_func_fast(J, h, spin_config)
 
         norm_cost = norm(cost)
