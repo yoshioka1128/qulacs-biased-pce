@@ -10,7 +10,8 @@ def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian
     verbose = config.verbose
     LEARN = config.learn
     USE_BACKPROP = config.backprop
-#    USE_BIAS = config.bias
+    if USE_BIAS: reg = f'reg_type{config.reg_type}'
+    else: reg = ''
 
     loss_history = [h[1] for h in history]
     exp_history  = [h[2] for h in history]
@@ -65,10 +66,10 @@ def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian
         str_bias = ''
         if USE_BACKPROP: str_backprop = '_backprop'
         if USE_BIAS: str_bias = '_bias'
-        with open(f"{output_dir}/results{str_backprop}{str_bias}_alphasc{alphasc}_beta{beta}_init{iinit}.json", 'w') as f:
+        with open(f"{output_dir}/results{str_backprop}{str_bias}_alphasc{alphasc}_beta{beta}_init{iinit}{reg}.json", 'w') as f:
             json.dump(result_dict, f, indent=4)
 
-        with open(f'{output_dir}/energy{str_backprop}{str_bias}_alphasc{alphasc}_beta{beta}_init{iinit}.csv', mode='w', newline='', encoding="utf-8") as f:
+        with open(f'{output_dir}/energy{str_backprop}{str_bias}_alphasc{alphasc}_beta{beta}_init{iinit}{reg}.csv', mode='w', newline='', encoding="utf-8") as f:
             writer = csv.writer(f, lineterminator="\n")
 
             if USE_BIAS:
