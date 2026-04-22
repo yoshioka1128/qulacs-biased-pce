@@ -40,7 +40,8 @@ def run(config, args):
 def run_batch(config, params):
 #    beta_list = [0.5, 1.0, 1.5, 2.0]
     beta_list = [-0.1, 0.0, 0.1, 0.2]
-    alpha_list = [0.1, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+#    alpha_list = [0.1, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+    alpha_list = [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]
 
     for beta, alphasc in itertools.product(beta_list, alpha_list):
         print(f"\n=== beta={beta}, alphasc={alphasc} ===")
