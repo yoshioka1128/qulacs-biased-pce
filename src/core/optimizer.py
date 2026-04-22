@@ -29,13 +29,11 @@ def read_optimize_fast(
     # Parameter handling
     # =========================
     def split_params(params):
-        if USE_BIAS:
-            return params[:-1], params[-1]
+        if USE_BIAS: return params[:-1], params[-1]
         return params, None
 
     def merge_params(theta, bias):
-        if USE_BIAS:
-            return np.concatenate([theta, [bias]])
+        if USE_BIAS: return np.concatenate([theta, [bias]])
         return theta
 
     theta_init = merge_params(theta0, 0.0)
@@ -49,8 +47,6 @@ def read_optimize_fast(
         return loss
 
     def grad_fn(params):
-        if not USE_BACKPROP:
-            return None
         grad = backprop(
             params,
             n_qubits,
@@ -62,7 +58,21 @@ def read_optimize_fast(
             alpha=alpha,
             beta=beta,
             nu=1.0,
-            USE_BIAS=USE_BIAS   # ← ★これ必須
+        )
+        return grad.flatten()
+
+    def grad_fn_bias(params):
+        grad = backprop_bias(
+            params,
+            n_qubits,
+            len(h),
+            ansatz=ansatz,
+            W=J,
+            h=h,
+            hamiltonian=hamiltonian,
+            alpha=alpha,
+            beta=beta,
+            nu=1.0,
         )
         return grad.flatten()
 
@@ -73,10 +83,8 @@ def read_optimize_fast(
     best_cost = None
 
     suffix = []
-    if USE_BACKPROP:
-        suffix.append("backprop")
-    if USE_BIAS:
-        suffix.append("bias")
+    if USE_BACKPROP: suffix.append("backprop")
+    if USE_BIAS: suffix.append("bias")
     suffix = "_" + "_".join(suffix) if suffix else ""
 
     csv_path = f"{output_dir}/energy_progress{suffix}_alphasc{alphasc}_beta{beta}_init{iinit}.csv"
@@ -86,10 +94,8 @@ def read_optimize_fast(
     theta, bias = split_params(theta_init)
     loss0, exp0 = compute_loss(J, h, n_qubits, theta, ansatz, hamiltonian, alpha, beta, bias)
 
-    if USE_BIAS:
-        history.append((theta.copy(), loss0, exp0, bias))
-    else:
-        history.append((theta.copy(), loss0, exp0))
+    if USE_BIAS: history.append((theta_init.copy(), loss0, exp0, bias)) # nparam + 1
+    else: history.append((theta.copy(), loss0, exp0)) # nparam
 
     if verbose:
         z = alpha * exp0 + (bias if bias is not None else 0.0)
@@ -133,7 +139,7 @@ def read_optimize_fast(
 
         print(
             f"[Iter {len(history)-1}] "
-            f"loss={norm_loss:.6f}, cost={norm_cost:.6f}, "
+            f"loss={norm_loss:.6f}, cost={norm_cost:.6f}, bias={bias} "
             f"number={spin_to_number(spin_config)}"
         )
 
@@ -163,24 +169,43 @@ def read_optimize_fast(
     # Run optimization
     # =========================
     start = time.time()
-
-    result = minimize(
-        loss_fn,
-        theta_init,
-        jac=grad_fn if USE_BACKPROP else None,
-        callback=callback,
-        method=method,
-        options={"disp": verbose, "maxiter": maxiter},
-    )
+    if USE_BACKPROP:
+        if USE_BIAS:
+            result = minimize(
+                loss_fn,
+                theta_init,
+                jac=grad_fn_bias,
+                callback=callback,
+                method=method,
+                options={"disp": verbose, "maxiter": maxiter},
+            )
+        else:
+            result = minimize(
+                loss_fn,
+                theta_init,
+                jac=grad_fn,
+                callback=callback,
+                method=method,
+                options={"disp": verbose, "maxiter": maxiter},
+            )
+    else:
+        result = minimize(
+            loss_fn,
+            theta_init,
+            callback=callback,
+            method=method,
+            options={"disp": verbose, "maxiter": maxiter},
+        )
 
     elapsed = time.time() - start
 
     return result, history, elapsed
 
-def backprop(parameters, n, m, ansatz, W, h, hamiltonian, alpha, beta, nu, USE_BIAS=False):
+
+def backprop_bias_old(parameters, n, m, ansatz, W, h, hamiltonian, alpha, beta, nu, use_bias=True):
     layer = ansatz.depth
 
-    if USE_BIAS:
+    if use_bias:
         theta = parameters[:-1]
         bias = parameters[-1]
     else:
@@ -243,7 +268,7 @@ def backprop(parameters, n, m, ansatz, W, h, hamiltonian, alpha, beta, nu, USE_B
     # =========================
     # bias 勾配（追加）
     # =========================
-    if USE_BIAS:
+    if use_bias:
         dL_dbias = 0.0
 
         # Interaction term
@@ -270,6 +295,124 @@ def backprop(parameters, n, m, ansatz, W, h, hamiltonian, alpha, beta, nu, USE_B
         return np.concatenate([g_theta, [dL_dbias]])
 
     return g_theta
+
+def backprop_bias(parameters, n, m, ansatz, W, h, hamiltonian, alpha, beta, nu):
+    theta = parameters[:-1]
+    b = parameters[-1]
+    
+#    if use_bias:
+#        theta = parameters[:-1]
+#        b = parameters[-1]
+#    else:
+#        theta = parameters
+#        b = 0.0
+
+    # --- state ---
+    ansatz.set_parameter(theta)
+    state = QuantumState(n)
+    ansatz.update_quantum_state(state)
+
+    # --- expectation ---
+    EV_array = np.array([
+        hamiltonian.get_term(i).get_expectation_value(state).real
+        for i in range(hamiltonian.get_term_count())
+    ])
+
+    # --- nonlinear ---
+    y_vals = np.tanh(alpha * EV_array)          # 正則化用
+    x_vals = np.tanh(alpha * EV_array + b)      # エネルギー用
+
+    # --- derivatives ---
+    dx_dE = alpha * (1 - x_vals**2)
+    dy_dE = alpha * (1 - y_vals**2)
+
+    # --- dL/dEi ---
+    dL_dEi = np.zeros_like(EV_array)
+
+    # --- interaction ---
+    for i in range(m):
+        for j in range(i):
+            dL_dEi[i] += W[i, j] * x_vals[j] * dx_dE[i]
+            dL_dEi[j] += W[i, j] * x_vals[i] * dx_dE[j]
+
+    # --- linear term ---
+    dL_dEi += h * dx_dE
+
+    # --- regularization（ここが重要変更） ---
+    dL_dEi += (2 * beta / m) * y_vals * dy_dE
+
+    # --- Observable ---
+    obs_all = Observable(n)
+    for i in range(len(dL_dEi)):
+        coef = float(dL_dEi[i])
+        if abs(coef) > 1e-12:
+            term = hamiltonian.get_term(i).get_pauli_string()
+            obs_all.add_operator(PauliOperator(term, coef))
+
+    # --- θ gradient ---
+    g_theta = ansatz.backprop(obs_all)
+    g_theta = np.asarray(g_theta, dtype=float)
+
+    # --- bias gradient ---
+    dL_db = np.sum(
+        (np.dot(W, x_vals) + h) * (1 - x_vals**2)
+    )
+    return np.concatenate([g_theta, [dL_db]])
+
+
+def backprop(parameters, n, m, ansatz, W, h, hamiltonian, alpha, beta, nu):
+    theta = parameters
+
+    # --- Forward ---
+    ansatz.set_parameter(theta)
+    state = QuantumState(n)
+    ansatz.update_quantum_state(state)
+
+    EV_array = np.array([
+        hamiltonian.get_term(i).get_expectation_value(state).real
+        for i in range(hamiltonian.get_term_count())
+    ])
+
+    # --- 明示的に分ける（重要） ---
+    y_vals = np.tanh(alpha * EV_array)
+    x_vals = y_vals  # bias=0 の場合
+
+    dx_dE = alpha * (1 - x_vals**2)
+    dy_dE = alpha * (1 - y_vals**2)
+
+    # =========================
+    # dL / dE_i
+    # =========================
+    dL_dEi = np.zeros_like(EV_array)
+
+    # --- interaction ---
+    for i in range(m):
+        for j in range(i):
+            dL_dEi[i] += W[i, j] * x_vals[j] * dx_dE[i]
+            dL_dEi[j] += W[i, j] * x_vals[i] * dx_dE[j]
+
+    # --- linear ---
+    dL_dEi += h * dx_dE
+
+    # --- regularization（yを使う）---
+    dL_dEi += (2 * beta / m) * y_vals * dy_dE
+
+    # =========================
+    # Observable構築
+    # =========================
+    obs_all = Observable(n)
+    for i, coef in enumerate(dL_dEi):
+        if abs(float(coef)) > 1e-12:
+            term = hamiltonian.get_term(i).get_pauli_string()
+            obs_all.add_operator(PauliOperator(term, float(coef)))
+
+    # =========================
+    # θ 勾配
+    # =========================
+    g_theta = np.asarray(ansatz.backprop(obs_all), dtype=float)
+
+    return g_theta
+
 
 #def read_optimize_fast(theta0, config, J, h, n_qubits, k, ansatz, hamiltonian,
 #                       alphasc, beta, Cmin, Cmax, frob_norm, shift,

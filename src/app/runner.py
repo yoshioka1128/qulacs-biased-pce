@@ -40,7 +40,8 @@ def run(config, args):
         run_single(config, params, alphasc, beta)
 
 def run_batch(config, params):
-    beta_list = [0.5, 1.0, 1.5, 2.0]
+#    beta_list = [0.5, 1.0, 1.5, 2.0]
+    beta_list = [-0.1, 0.0, 0.1, 0.2]
     alpha_list = [0.1, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
 
     for beta, alphasc in itertools.product(beta_list, alpha_list):
@@ -137,20 +138,17 @@ def run_single(config, params, alphasc, beta):
 
         if config.verbose:
             show_observable(pce)
-
         for alphasc in alphascs:
             alpha = alphasc * n_qubits ** np.floor(k / 2)
 
             for beta in betas:
                 for iinit in range(ninit2):
-
                     theta0 = sample_init(
                         config.readmode,
                         rng,
                         ansatz.get_parameter_count(),
                         init_para
                     )
-
                     result, history, elapsed_time = read_optimize_fast(
                         theta0, config, dJ, dhex, n_qubits, k, ansatz,
                         pce, alphasc, beta, Cmin, Cmax, frob_norm, shift, iinit, output_dir,
