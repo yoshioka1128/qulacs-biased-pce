@@ -5,12 +5,12 @@ from power import sk_cost_func, sk_cost_func_fast
 from src.core.utils import get_binary_solution, spin_to_number, convert_seconds_to_hms
 
 def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian, n_qubits, k, Cmin, Cmax, frob_norm, shift, n_nodes,
-                      alphasc, beta, elapsed_time, iinit, config):
+                      alphasc, beta, elapsed_time, iinit, config, USE_BIAS):
 
     verbose = config.verbose
     LEARN = config.learn
     USE_BACKPROP = config.backprop
-    USE_BIAS = config.bias
+#    USE_BIAS = config.bias
 
     loss_history = [h[1] for h in history]
     exp_history  = [h[2] for h in history]

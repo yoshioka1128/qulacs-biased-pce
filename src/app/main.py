@@ -1,3 +1,4 @@
+# main.py
 import argparse
 from src.app.runner import run
 from src.config.config import Config
@@ -8,6 +9,7 @@ def parse_args():
 
     parser.add_argument("--m", type=int, default=60)
     parser.add_argument("--batch", action="store_true")
+    parser.add_argument("--bias", action="store_true")
     parser.add_argument("--itime", type=int, default=1)
     parser.add_argument("--nT", type=int, default=24)
     parser.add_argument("--rate", type=float, default=0.25)

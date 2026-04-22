@@ -10,15 +10,15 @@ import numpy as np
 # Optimization wrapper
 # =========================
 def read_optimize_fast(
-    theta0, config, J, h, n_qubits, k, ansatz, hamiltonian,
-    alphasc, beta, Cmin, Cmax, frob_norm, shift,
-    iinit, output_dir
+        theta0, config, J, h, n_qubits, k, ansatz, hamiltonian,
+        alphasc, beta, Cmin, Cmax, frob_norm, shift,
+        iinit, output_dir, USE_BIAS
 ):
     # ---- config ----
     method = config.method
     verbose = config.verbose
     USE_BACKPROP = config.backprop
-    USE_BIAS = config.bias
+#    USE_BIAS = config.bias
     maxiter = config.maxiter
 
     alpha = alphasc * n_qubits ** np.floor(k / 2)

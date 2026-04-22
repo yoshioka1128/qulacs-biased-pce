@@ -27,14 +27,12 @@ def run(config, args):
         "itime": args.itime,
         "nT": args.nT,
         "rate": args.rate,
+        "bias": args.bias
     }
 
     if args.batch:
         run_batch(config, params)
     else:
-        # 単発実行
-#        alphasc = args.alphasc or cfg.alphasc
-#        beta = args.beta or cfg.beta
         alphasc = args.alphasc if args.alphasc is not None else cfg.alphasc
         beta = args.beta if args.beta is not None else cfg.beta
         run_single(config, params, alphasc, beta)
@@ -65,6 +63,7 @@ def run_single(config, params, alphasc, beta):
     m = params['m']
     depth = params["depth"]
     type_ansatz = params["type_ansatz"]
+    USE_BIAS = params["bias"]
     
     if config.learn:
         alphascs = [0.01, 0.1, 0.5, 1.0, 1.5]
@@ -151,7 +150,7 @@ def run_single(config, params, alphasc, beta):
                     )
                     result, history, elapsed_time = read_optimize_fast(
                         theta0, config, dJ, dhex, n_qubits, k, ansatz,
-                        pce, alphasc, beta, Cmin, Cmax, frob_norm, shift, iinit, output_dir,
+                        pce, alphasc, beta, Cmin, Cmax, frob_norm, shift, iinit, output_dir, USE_BIAS
                     )
 
                     mineng, minnum = save_results_fast(
@@ -170,6 +169,7 @@ def run_single(config, params, alphasc, beta):
                         elapsed_time,
                         iinit,
                         config,
+                        USE_BIAS,
                     )
 
                     print(alphasc, beta, iprob, iinit, mineng, minnum)
