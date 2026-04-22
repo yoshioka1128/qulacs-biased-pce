@@ -3,7 +3,7 @@ from qulacs import ParametricQuantumCircuit, QuantumState, PauliOperator, Observ
 from scipy.optimize import minimize
 from power import power_loss_func_correct, sk_cost_func_fast
 from src.core.utils import spin_to_number
-from src.domain.loss.power_loss_func_fast import  power_loss_func_fast, power_loss_func_bias, compute_loss
+from src.domain.loss.power_loss_func_fast import  compute_loss
 import numpy as np
 
 # =========================
@@ -20,6 +20,9 @@ def read_optimize_fast(
     USE_BACKPROP = config.backprop
 #    USE_BIAS = config.bias
     maxiter = config.maxiter
+    reg_type = config.reg_type
+    if USE_BIAS: reg = f'reg_type{reg_type}'
+    else: reg = ''
 
     alpha = alphasc * n_qubits ** np.floor(k / 2)
 
@@ -43,7 +46,12 @@ def read_optimize_fast(
     # =========================
     def loss_fn(params):
         theta, bias = split_params(params)
-        loss, _ = compute_loss(J, h, n_qubits, theta, ansatz, hamiltonian, alpha, beta, bias)
+        loss, _ = compute_loss(
+            J, h, n_qubits, theta, ansatz, hamiltonian,
+            alpha, beta,
+            bias=bias,
+            reg_type=reg_type
+        )
         return loss
 
     def grad_fn(params):
@@ -87,12 +95,17 @@ def read_optimize_fast(
     if USE_BIAS: suffix.append("bias")
     suffix = "_" + "_".join(suffix) if suffix else ""
 
-    csv_path = f"{output_dir}/energy_progress{suffix}_alphasc{alphasc}_beta{beta}_init{iinit}.csv"
-    json_path = f"{output_dir}/progress{suffix}_alphasc{alphasc}_beta{beta}_init{iinit}.json"
+    csv_path = f"{output_dir}/energy_progress{suffix}_alphasc{alphasc}_beta{beta}_init{iinit}{reg}.csv"
+    json_path = f"{output_dir}/progress{suffix}_alphasc{alphasc}_beta{beta}_init{iinit}{reg}.json"
 
     # ---- initial evaluation ----
     theta, bias = split_params(theta_init)
-    loss0, exp0 = compute_loss(J, h, n_qubits, theta, ansatz, hamiltonian, alpha, beta, bias)
+    loss0, exp0 = compute_loss(
+        J, h, n_qubits, theta, ansatz, hamiltonian,
+        alpha, beta,
+        bias=bias,
+        reg_type=reg_type,
+    )
 
     if USE_BIAS: history.append((theta_init.copy(), loss0, exp0, bias)) # nparam + 1
     else: history.append((theta.copy(), loss0, exp0)) # nparam
@@ -121,7 +134,12 @@ def read_optimize_fast(
         nonlocal best_cost
 
         theta, bias = split_params(params)
-        loss, exp_val = compute_loss(J, h, n_qubits, theta, ansatz, hamiltonian, alpha, beta, bias)
+        loss, exp_val = compute_loss(
+            J, h, n_qubits, theta, ansatz, hamiltonian,
+            alpha, beta,
+            bias=bias,
+            reg_type=reg_type,
+        )
 
         if USE_BIAS:
             history.append((params.copy(), loss, exp_val, bias))
