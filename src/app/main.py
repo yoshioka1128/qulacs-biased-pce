@@ -3,7 +3,6 @@ import argparse
 from src.app.runner import run
 from src.config.config import Config
 
-
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -22,16 +21,13 @@ def parse_args():
     parser.add_argument("--beta", type=float)
     parser.add_argument("--type_ansatz", type=str, default="all2all")
 
-   
     return parser.parse_args()
-
 
 def main():
     args = parse_args()
     config = Config()
-
+    config.normalize(args.bias)
     run(config, args)
-
 
 if __name__ == "__main__":
     main()

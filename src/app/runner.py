@@ -38,10 +38,9 @@ def run(config, args):
         run_single(config, params, alphasc, beta)
 
 def run_batch(config, params):
-#    beta_list = [0.5, 1.0, 1.5, 2.0]
     beta_list = [-0.1, 0.0, 0.1, 0.2]
-#    alpha_list = [0.1, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
-    alpha_list = [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]
+    alpha_list = [0.1, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+#    alpha_list = [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]
 
     for beta, alphasc in itertools.product(beta_list, alpha_list):
         print(f"\n=== beta={beta}, alphasc={alphasc} ===")
@@ -65,6 +64,8 @@ def run_single(config, params, alphasc, beta):
     depth = params["depth"]
     type_ansatz = params["type_ansatz"]
     USE_BIAS = params["bias"]
+    if USE_BIAS: bias_type = "_bias"
+    else: bias_type = ""
     
     if config.learn:
         alphascs = [0.01, 0.1, 0.5, 1.0, 1.5]
@@ -76,7 +77,7 @@ def run_single(config, params, alphasc, beta):
         config.learn, "new" if config.use_new else "old",
         config.nprob, config.ninit, it, nT, rate, m,
         type_ansatz, n_qubits, k, depth,
-        config.method, config.iseed
+        config.method, config.iseed, bias_type
     )
 
     ansatz = select_ansatz(type_ansatz, n_qubits, depth)
