@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/yoshioka/git/qulacs-biased-pce/src/app/main.py", line 33, in <module>
+    main()
+    ~~~~^^
+  File "/home/yoshioka/git/qulacs-biased-pce/src/app/main.py", line 30, in main
+    run(config, args)
+    ~~~^^^^^^^^^^^^^^
+  File "/home/yoshioka/git/qulacs-biased-pce/src/app/runner.py", line 18, in run
+    cfg = NODE_CONFIG[args.m]
+          ~~~~~~~~~~~^^^^^^^^
+KeyError: 256
