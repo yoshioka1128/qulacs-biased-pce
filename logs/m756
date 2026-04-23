@@ -1,0 +1,4 @@
+usage: main.py [-h] [--m M] [--batch] [--bias] [--itime ITIME] [--nT NT]
+               [--rate RATE] [--n_qubits N_QUBITS] [--k K] [--depth DEPTH]
+               [--alphasc ALPHASC] [--beta BETA] [--type_ansatz TYPE_ANSATZ]
+main.py: error: unrecognized arguments: rate0.2_bias_y.log
