@@ -38,13 +38,13 @@ def _compute_energy(J, h, x, y, beta, reg_type="y"):
     node = np.dot(h, x)
 
     if reg_type == "y":
-        reg = beta * np.mean(y**2)
+        reg_func = beta * np.mean(y**2)
     elif reg_type == "x":
-        reg = beta * np.mean(x**2)
+        reg_func = beta * np.mean(x**2)
     else:
         raise ValueError(f"Unknown reg_type: {reg_type}")
 
-    return interaction + node + reg
+    return interaction + node + reg_func
 
 def _compute_expectation(n_qubits, para, ansatz, hamiltonian):
     ansatz.set_parameter(para)
