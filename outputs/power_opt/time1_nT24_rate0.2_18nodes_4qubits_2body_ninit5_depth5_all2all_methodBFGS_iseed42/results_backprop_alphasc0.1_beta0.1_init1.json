@@ -45,13 +45,13 @@
         0.17470149280998615
     ],
     "Number for Minimum Energy": 20231,
-    "Elapsed Time [seconds]": 0.09325599670410156,
+    "Elapsed Time [seconds]": 0.10587906837463379,
     "Elapsed Time [hours, minutes, seconds]": [
         0,
         0,
-        0.09
+        0.11
     ],
-    "Current function value": -0.4698302833519916,
+    "Current function value": -0.46983028335199145,
     "Iterations": 83,
     "Function Evaluations, Estimation": [
         84,
