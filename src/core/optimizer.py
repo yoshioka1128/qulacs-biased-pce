@@ -5,6 +5,7 @@ from src.core.utils import spin_to_number
 from src.core.expectation import compute_expectation
 from src.domain.loss.power_loss import  compute_loss, compute_loss_bias_x, compute_loss_bias_xy
 from src.domain.loss.power_grad_loss import  backprop, backprop_bias_x, backprop_bias_y
+from src.domain.cost.power_cost import  compute_cost
 import numpy as np
 
 # =========================
@@ -140,7 +141,7 @@ def read_optimize_fast(
     if verbose:
         z = alpha * exp0 + (bias if bias is not None else 0.0)
         spin_config = np.sign(z)
-        cost0 = sk_cost_func_fast(J, h, spin_config)
+        cost0 = compute_cost(J, h, spin_config)
 
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f, lineterminator="\n")
@@ -173,7 +174,7 @@ def read_optimize_fast(
             return
         z = alpha * exp_val + (bias if bias is not None else 0.0)
         spin_config = np.sign(z)
-        cost = sk_cost_func_fast(J, h, spin_config)
+        cost = compute_cost(J, h, spin_config)
 
         norm_cost = norm(cost)
         norm_loss = norm(loss)

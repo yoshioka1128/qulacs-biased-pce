@@ -2,7 +2,7 @@ import json
 import csv
 import numpy as np
 from src.core.utils import get_binary_solution, spin_to_number, convert_seconds_to_hms
-from src.domain.cost.power_cost import power_cost
+from src.domain.cost.power_cost import compute_cost
 
 def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian, n_qubits, k, Cmin, Cmax, frob_norm, shift, n_nodes,
                       alphasc, beta, elapsed_time, iinit, config, USE_BIAS):
@@ -22,7 +22,7 @@ def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian
     ]
     if USE_BIAS: bias_history = [h[3] for h in history]
     
-    cost_history = [power_cost(dJ, dhex, x) for x in bit_history]
+    cost_history = [compute_cost(dJ, dhex, x) for x in bit_history]
     norm = lambda x: (x * frob_norm + shift - Cmin) / (Cmax - Cmin)
     min_idx = int(np.argmin(cost_history))
     min_params = history[min_idx][0]
