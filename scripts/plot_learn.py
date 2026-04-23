@@ -5,13 +5,16 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 import numpy as np
 
+nodes = int(input('input nodes: ') or 18)
+if nodes ==18: file = "time1_nT24_rate0.2_18nodes_4qubits_2body_ninit5_depth5_all2all_methodBFGS_iseed42_new"
+elif nodes == 60: file ="time1_nT24_rate0.2_60nodes_6qubits_3body_ninit5_depth5_all2all_methodBFGS_iseed42_new"
+elif nodes == 210: file = "time1_nT24_rate0.2_210nodes_8qubits_4body_ninit5_depth5_all2all_methodBFGS_iseed42_new"
+elif nodes == 756: file = "time1_nT24_rate0.2_756nodes_10qubits_5body_ninit5_depth5_all2all_methodBFGS_iseed42_new"
+
 BASE_DIR = Path(__file__).resolve().parents[1]
 
-DATA_DIR = BASE_DIR / "outputs" / "power_opt" / \
-    "time1_nT24_rate0.2_60nodes_6qubits_3body_ninit5_depth5_all2all_methodBFGS_iseed42_new"
-#    "time1_nT24_rate0.2_18nodes_4qubits_2body_ninit5_depth5_all2all_methodBFGS_iseed42_new"
-
-
+DATA_DIR = BASE_DIR / "outputs" / "power_opt" / file
+    
 # 保存先（指定通り）
 SAVE_DIR = BASE_DIR / "outputs" / "power_opt" / "figures"
 SAVE_DIR.mkdir(parents=True, exist_ok=True)
@@ -60,6 +63,7 @@ def plot_data(energy_data, loss_data, title, save_path):
     plt.figure()
 
     target_betas = [-0.1, 0.0, 0.1, 0.2]
+#    target_betas = [-0.1, 0.0, 0.5, 1.0, 1.5, 2.0]
 
     for beta in target_betas:
         if beta not in energy_data:
@@ -124,6 +128,7 @@ energy_with_bias, _ = load_data(use_bias=True)
 plt.figure()
 
 target_betas = [-0.1, 0.0, 0.1, 0.2]
+#target_betas = [-0.1, 0.0, 0.5, 1.0, 1.5, 2.0]
 
 for beta in target_betas:
 
@@ -167,4 +172,3 @@ plt.savefig(SAVE_DIR / "energy_comparison_bias_vs_no_bias.png")
 plt.show()
 
 
-plt.show()
