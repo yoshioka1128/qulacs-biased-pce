@@ -18,10 +18,9 @@ def read_optimize_fast(
     method = config.method
     verbose = config.verbose
     USE_BACKPROP = config.backprop
-#    USE_BIAS = config.bias
     maxiter = config.maxiter
     reg_type = config.reg_type
-    if USE_BIAS: reg = f'reg_type{reg_type}'
+    if USE_BIAS: reg = f'_reg_type{reg_type}'
     else: reg = ''
 
     alpha = alphasc * n_qubits ** np.floor(k / 2)
@@ -69,20 +68,37 @@ def read_optimize_fast(
         )
         return grad.flatten()
 
-    def grad_fn_bias(params):
-        grad = backprop_bias(
-            params,
-            n_qubits,
-            len(h),
-            ansatz=ansatz,
-            W=J,
-            h=h,
-            hamiltonian=hamiltonian,
-            alpha=alpha,
-            beta=beta,
-            nu=1.0,
-        )
-        return grad.flatten()
+    if reg_type == 'x':
+        def grad_fn_bias(params):
+            grad = backprop_bias_old(
+                params,
+                n_qubits,
+                len(h),
+                ansatz=ansatz,
+                W=J,
+                h=h,
+                hamiltonian=hamiltonian,
+                alpha=alpha,
+                beta=beta,
+                nu=1.0,
+            )
+            return grad.flatten()
+
+    elif reg_tpe == 'y':
+        def grad_fn_bias(params):
+            grad = backprop_bias(
+                params,
+                n_qubits,
+                len(h),
+                ansatz=ansatz,
+                W=J,
+                h=h,
+                hamiltonian=hamiltonian,
+                alpha=alpha,
+                beta=beta,
+                nu=1.0,
+            )
+            return grad.flatten()
 
     # =========================
     # Logging setup
