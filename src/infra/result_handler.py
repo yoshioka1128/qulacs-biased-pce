@@ -1,8 +1,8 @@
 import json
 import csv
 import numpy as np
-from power import sk_cost_func, sk_cost_func_fast
 from src.core.utils import get_binary_solution, spin_to_number, convert_seconds_to_hms
+from src.domain.cost.power_cost import power_cost
 
 def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian, n_qubits, k, Cmin, Cmax, frob_norm, shift, n_nodes,
                       alphasc, beta, elapsed_time, iinit, config, USE_BIAS):
@@ -10,7 +10,7 @@ def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian
     verbose = config.verbose
     LEARN = config.learn
     USE_BACKPROP = config.backprop
-    if USE_BIAS: reg = f'reg_type{config.reg_type}'
+    if USE_BIAS: reg = f'_reg_type{config.reg_type}'
     else: reg = ''
 
     loss_history = [h[1] for h in history]
@@ -22,10 +22,7 @@ def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian
     ]
     if USE_BIAS: bias_history = [h[3] for h in history]
     
-#    loss_history = [loss for _, loss, _ in history]
-#    bit_history = [get_binary_solution(n_nodes, p, ansatz, hamiltonian, n_qubits, USE_BIAS) for p, _, _ in history]
-#    exp_history = [exp for _, _, exp in history]
-    cost_history = [sk_cost_func_fast(dJ, dhex, x) for x in bit_history]
+    cost_history = [power_cost(dJ, dhex, x) for x in bit_history]
     norm = lambda x: (x * frob_norm + shift - Cmin) / (Cmax - Cmin)
     min_idx = int(np.argmin(cost_history))
     min_params = history[min_idx][0]
