@@ -1,7 +1,7 @@
 {
     "Calculated Minimum Energy [norm, row]": [
-        0.00921679971861302,
-        -0.9450761908213358
+        0.009216799718612981,
+        -0.9450761908213359
     ],
     "Corresponding loss function": 0.15578728392276253,
     "Solution for Minimum Energy": [
@@ -45,13 +45,13 @@
         0.17533866729385172
     ],
     "Number for Minimum Energy": 20231,
-    "Elapsed Time [seconds]": 0.12573695182800293,
+    "Elapsed Time [seconds]": 0.11729001998901367,
     "Elapsed Time [hours, minutes, seconds]": [
         0,
         0,
-        0.13
+        0.12
     ],
-    "Current function value": -0.46493123960894045,
+    "Current function value": -0.46493123960894095,
     "Iterations": 85,
     "Function Evaluations, Estimation": [
         86,
