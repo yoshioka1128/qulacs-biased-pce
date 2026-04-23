@@ -22,7 +22,7 @@ def compute_loss_bias_xy(
         alpha, beta, bias=None, reg_type='y'
 ):
     exp_value = compute_expectation(n_qubits, theta, ansatz, hamiltonian)
-    z = alpha * exp_value + (bias if bias is not None else 0.0)
+    z = alpha * exp_value + bias
     x = np.tanh(z)
     y = np.tanh(alpha * exp_value)
     

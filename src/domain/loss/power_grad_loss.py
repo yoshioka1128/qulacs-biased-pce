@@ -150,7 +150,7 @@ def backprop_bias_y(parameters, n, m, ansatz, W, h, hamiltonian,
     # bias gradient（元コードと完全一致）
     # =========================
     dL_db = np.sum(
-        (np.dot(W, x_vals) + h) * (1.0 - x_vals**2)
+        ((np.dot(W, x_vals) + np.dot(W.T, x_vals)) + h) * (1.0 - x_vals**2)
     )
 
     return np.concatenate([g_theta, [dL_db]])

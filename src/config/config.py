@@ -13,7 +13,7 @@ class Config:
     maxiter: int = 10000
     readmode: bool = False
     backprop: bool = True
-    reg_type: str = "y"   # "x": tanh(\alpha<\P_i>+b)^2 or "y": tanh(\alpha<\P_i>)^2
+    reg_type: str = "x"   # "x": tanh(\alpha<\P_i>+b)^2 or "y": tanh(\alpha<\P_i>)^2
 
     def normalize(self, use_bias: bool):
         if not use_bias:

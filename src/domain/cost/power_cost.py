@@ -1,5 +1,5 @@
-# power_cost_func.py
-def power_cost(J, h, spin_config):
+# power_cost.py
+def compute_cost(J, h, spin_config):
     J_sym = J + J.T
     interaction_term = 0.5 * float(spin_config @ J_sym @ spin_config)
 
