@@ -11,7 +11,7 @@ def parse_args():
     parser.add_argument("--bias", action="store_true")
     parser.add_argument("--itime", type=int, default=1)
     parser.add_argument("--nT", type=int, default=24)
-    parser.add_argument("--rate", type=float, default=0.25)
+    parser.add_argument("--rate", type=float, default=0.1)
 
     # 上書き用（任意）
     parser.add_argument("--n_qubits", type=int)
