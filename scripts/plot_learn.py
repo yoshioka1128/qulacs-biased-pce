@@ -5,6 +5,13 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 import numpy as np
 
+marker_map = {
+    -0.1: "o",   # circle
+    0.0: "s",    # square
+    0.1: "^",    # triangle
+    0.2: "D",    # diamond
+}
+
 target_betas = [-0.1, 0.0, 0.1, 0.2]
 # target_betas = [-0.1, 0.0, 0.5, 1.0, 1.5, 2.0]
 
@@ -113,20 +120,22 @@ def plot_data_by_regtype(energy_data, loss_data, title, save_path):
             if not xs:
                 continue
 
-            # Energy
+            marker = marker_map[beta]
+
+            # Energy（実線）
             plt.plot(
                 xs, energy_mean,
-                marker="o",
-                linestyle=linestyle_map["energy"],
+                marker=marker,
+                linestyle="-",
                 color=color_map[reg_type],
                 label=f"Energy (beta={beta}, reg={reg_type})"
             )
 
-            # Loss
+            # Loss（破線）
             plt.plot(
                 xs, loss_mean,
-                marker="x",
-                linestyle=linestyle_map["loss"],
+                marker=marker,
+                linestyle="--",
                 color=color_map[reg_type],
                 label=f"Loss (beta={beta}, reg={reg_type})"
             )
@@ -162,8 +171,8 @@ energy_no_bias, _ = load_data(DATA_DIR_NO_BIAS, use_bias=False)
 energy_with_bias, _ = load_data(DATA_DIR_WITH_BIAS, use_bias=True)
 
 plt.figure()
-
 for beta in target_betas:
+    marker = marker_map[beta]
 
     # --- no bias ---
     if beta in energy_no_bias:
@@ -178,11 +187,17 @@ for beta in target_betas:
             xs.append(a)
             ys.append(np.mean(energy_no_bias[beta][a]["no_reg"]))
 
-        plt.plot(xs, ys, marker="o", linestyle="-",
-                 color="black", label=f"No bias (beta={beta})")
+        plt.plot(xs, ys,
+                 marker=marker,
+                 linestyle="-",
+                 color="black",
+                 label=f"No bias (beta={beta})")
+#        plt.plot(xs, ys, marker="o", linestyle="-",
+#                 color="black", label=f"No bias (beta={beta})")
 
     # --- with bias (x, y) ---
     if beta in energy_with_bias:
+        marker = marker_map[beta]
         alphasc_list = sorted(energy_with_bias[beta].keys())
 
         for reg_type, color in [("x", "blue"), ("y", "red")]:
@@ -196,9 +211,14 @@ for beta in target_betas:
                 ys.append(np.mean(energy_with_bias[beta][a][reg_type]))
 
             if xs:
-                plt.plot(xs, ys, marker="x", linestyle="--",
+                plt.plot(xs, ys,
+                         marker=marker,
+                         linestyle="--",
                          color=color,
                          label=f"With bias {reg_type} (beta={beta})")
+#                plt.plot(xs, ys, marker="x", linestyle="--",
+#                         color=color,
+#                         label=f"With bias {reg_type} (beta={beta})")
 
 plt.xlabel("alphasc")
 plt.ylabel("Energy")
@@ -208,4 +228,88 @@ plt.legend()
 plt.grid()
 
 plt.savefig(SAVE_DIR / "energy_comparison_regtype.png")
+
+# --- betaごとの色指定 ---
+beta_color_map = {
+    -0.1: "C2",
+    0.0: "C0",
+    0.1: "C1",
+    0.2: "C3",
+}
+
+def plot_by_dataset(energy_data, loss_data, reg_type, title, save_path):
+    plt.figure()
+
+    for beta in target_betas:
+        if beta not in energy_data:
+            continue
+
+        alphasc_list = sorted(energy_data[beta].keys())
+
+        xs = []
+        energy_mean = []
+        loss_mean = []
+
+        for a in alphasc_list:
+            if reg_type not in energy_data[beta][a]:
+                continue
+
+            xs.append(a)
+            energy_mean.append(np.mean(energy_data[beta][a][reg_type]))
+            loss_mean.append(np.mean(loss_data[beta][a][reg_type]))
+
+        if not xs:
+            continue
+
+        color = beta_color_map[beta]
+
+        # energy（実線）
+        plt.plot(xs, energy_mean,
+                 linestyle="-",
+                 marker="o",
+                 color=color,
+                 label=f"Energy beta={beta}")
+
+        # loss（破線）
+        plt.plot(xs, loss_mean,
+                 linestyle="--",
+                 marker="x",
+                 color=color,
+                 label=f"Loss beta={beta}")
+
+    plt.xlabel("alphasc")
+    plt.ylabel("value")
+    plt.title(title)
+    plt.legend()
+    plt.grid()
+
+    plt.savefig(save_path)
+
+
+# --- No bias ---
+energy_nb, loss_nb = load_data(DATA_DIR_NO_BIAS, use_bias=False)
+plot_by_dataset(
+    energy_nb, loss_nb,
+    reg_type="no_reg",
+    title="No bias (beta color, energy/loss style)",
+    save_path=SAVE_DIR / "no_bias_beta_color.png"
+)
+
+# --- with bias x ---
+energy_wb, loss_wb = load_data(DATA_DIR_WITH_BIAS, use_bias=True)
+plot_by_dataset(
+    energy_wb, loss_wb,
+    reg_type="x",
+    title="With bias x (beta color, energy/loss style)",
+    save_path=SAVE_DIR / "with_bias_x_beta_color.png"
+)
+
+# --- with bias y ---
+plot_by_dataset(
+    energy_wb, loss_wb,
+    reg_type="y",
+    title="With bias y (beta color, energy/loss style)",
+    save_path=SAVE_DIR / "with_bias_y_beta_color.png"
+)
+
 plt.show()
