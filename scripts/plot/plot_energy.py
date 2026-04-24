@@ -8,6 +8,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--m", type=int, default=18)
     parser.add_argument("--mode", choices=["mean", "min", "band"], default="band")
+    parser.add_argument("--model", choices=["no_bias", "bias_x", "bias_y"], default="no_bias")
     args = parser.parse_args()
 
     file_map = {
@@ -36,8 +37,45 @@ def main():
         energy_wb,
         DEFAULT_BETAS,
         aggregation=aggregation,
-        save_path=save_path
-       )
+        save_path=save_path,
+#        loss_nb=loss_nb,
+#        loss_wb=loss_wb,
+        mode="method",
+    )
 
+    plot_energy(
+        energy_nb,
+        energy_wb,
+        DEFAULT_BETAS,
+        aggregation=aggregation,
+        save_path=SAVE_DIR / "bias_x.png",
+        loss_nb=loss_nb,
+        loss_wb=loss_wb,
+        mode="beta",
+        model='bias_x',
+    )
+    plot_energy(
+        energy_nb,
+        energy_wb,
+        DEFAULT_BETAS,
+        aggregation=aggregation,
+        save_path=SAVE_DIR / "bias_y.png",
+        loss_nb=loss_nb,
+        loss_wb=loss_wb,
+        mode="beta",
+        model='bias_y',
+    )
+    plot_energy(
+        energy_nb,
+        energy_wb,
+        DEFAULT_BETAS,
+        aggregation=aggregation,
+        save_path=SAVE_DIR / "no_bias.png",
+        loss_nb=loss_nb,
+        loss_wb=loss_wb,
+        mode="beta",
+        model='no_bias',
+    )
+    plt.show()
 if __name__ == "__main__":
     main()
