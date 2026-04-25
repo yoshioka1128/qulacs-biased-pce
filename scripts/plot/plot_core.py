@@ -3,6 +3,22 @@ from src.analysis.aggregator import aggregate
 
 DEFAULT_BETAS = [-0.1, 0.0, 0.1, 0.2]
 
+beta_marker_map = {
+    -0.1: "o",
+    0.0: "s",
+    0.1: "^",
+    0.2: "D",
+}
+
+def make_label(mode, model, label_prefix, beta, suffix=None):
+    if mode == "method":
+        base = f"{label_prefix}, beta={beta}"
+    else:
+        base = f"{model}, beta={beta}"
+
+    return f"{base} {suffix}" if suffix else base
+
+
 def compute_stats(vals):
     return (
         min(vals),
@@ -10,35 +26,50 @@ def compute_stats(vals):
         sum(vals) / len(vals)
     )
 
-def plot_energy(
-    energy_nb,
-    energy_wb,
+
+def build_datasets(
+    mode,
+    model,
+    cost_nb,
+    cost_wb,
+    loss_nb,
+    loss_wb,
     target_betas,
-    aggregation,
-    save_path,
-    loss_nb=None,
-    loss_wb=None,
-    mode="method",   # ★追加
-    model="no_bias",
 ):
-    plt.figure()
+    """
+    plot用DATASETS生成
+    """
 
-    # =========================
-    # DATASETS定義
-    # =========================
     if mode == "method":
-        DATASETS = [
-            ("No bias", energy_nb, loss_nb, "no_reg",
-             dict(color="black", marker="o")),
-
-            ("Bias x", energy_wb, loss_wb, "x",
-             dict(color="blue", marker="s")),
-
-            ("Bias y", energy_wb, loss_wb, "y",
-             dict(color="red", marker="^")),
+        return [
+            (
+                "No bias",
+                cost_nb,
+                loss_nb,
+                "no_reg",
+                dict(color="black"),
+                target_betas,
+            ),
+            (
+                "Bias x",
+                cost_wb,
+                loss_wb,
+                "x",
+                dict(color="blue"),
+                target_betas,
+            ),
+            (
+                "Bias y",
+                cost_wb,
+                loss_wb,
+                "y",
+                dict(color="red"),
+                target_betas,
+            ),
         ]
 
     elif mode == "beta":
+
         beta_color_map = {
             -0.1: "C2",
             0.0: "C0",
@@ -47,122 +78,206 @@ def plot_energy(
         }
 
         if model == "no_bias":
-            e_dict = energy_nb
+            e_dict = cost_nb
             l_dict = loss_nb
             reg_type = "no_reg"
 
         elif model == "bias_x":
-            e_dict = energy_wb
+            e_dict = cost_wb
             l_dict = loss_wb
             reg_type = "x"
 
         elif model == "bias_y":
-            e_dict = energy_wb
+            e_dict = cost_wb
             l_dict = loss_wb
             reg_type = "y"
 
         else:
             raise ValueError(f"Unknown model: {model}")
-        
-        # no_biasのみ使う（必要なら拡張可能）
-        DATASETS = []
+
+        datasets = []
+
         for beta in target_betas:
-            DATASETS.append((
-                f"{model}, beta={beta}",
-                e_dict,
-                l_dict,
-                reg_type,
-                dict(color=beta_color_map[beta], marker="o"),
-                beta
-            ))
+            datasets.append(
+                (
+                    model,
+                    e_dict,
+                    l_dict,
+                    reg_type,
+                    dict(color=beta_color_map[beta], marker="o"),
+                    [beta],
+                )
+            )
+
+        return datasets
 
     else:
         raise ValueError(f"Unknown mode: {mode}")
 
-    # =========================
-    # ループ
-    # =========================
-    for item in DATASETS:
 
-        # modeで構造が違うので分岐
-        if mode == "method":
-            label_prefix, e_dict, l_dict, reg_type, style = item
-            beta_loop = target_betas
+def collect_series(e_dict, l_dict, beta, reg_type):
+    xs = []
+    mean_e, min_e, max_e = [], [], []
+    mean_l = []
 
-        else:  # beta mode
-            label_prefix, e_dict, l_dict, reg_type, style, fixed_beta = item
-            beta_loop = [fixed_beta]
+    if beta not in e_dict:
+        return None
+
+    for a in sorted(e_dict[beta].keys()):
+
+        if reg_type not in e_dict[beta][a]:
+            continue
+
+        e_vals = e_dict[beta][a][reg_type]
+        mn, mx, avg = compute_stats(e_vals)
+
+        xs.append(a)
+        mean_e.append(avg)
+        min_e.append(mn)
+        max_e.append(mx)
+
+        if l_dict is not None:
+            l_vals = l_dict[beta][a][reg_type]
+            mean_l.append(sum(l_vals) / len(l_vals))
+
+    if not xs:
+        return None
+
+    return xs, mean_e, min_e, max_e, mean_l
+
+
+def plot_cost(
+        cost_nb,
+        cost_wb,
+        target_betas,
+        aggregation,
+        save_path,
+        loss_nb=None,
+        loss_wb=None,
+        mode="method",
+        model="no_bias",
+        close_fig=False,
+):
+
+    fig, ax = plt.subplots()
+
+    datasets = build_datasets(
+        mode=mode,
+        model=model,
+        cost_nb=cost_nb,
+        cost_wb=cost_wb,
+        loss_nb=loss_nb,
+        loss_wb=loss_wb,
+        target_betas=target_betas,
+    )
+
+    for label_prefix, e_dict, l_dict, reg_type, style, beta_loop in datasets:
 
         for beta in beta_loop:
 
-            if beta not in e_dict:
+            result = collect_series(
+                e_dict=e_dict,
+                l_dict=l_dict,
+                beta=beta,
+                reg_type=reg_type,
+            )
+
+            if result is None:
                 continue
 
-            xs = []
-            mean_e, min_e, max_e = [], [], []
-            mean_l = []
-
-            for a in sorted(e_dict[beta].keys()):
-                if reg_type not in e_dict[beta][a]:
-                    continue
-
-                e_vals = e_dict[beta][a][reg_type]
-                mn, mx, avg = compute_stats(e_vals)
-
-                xs.append(a)
-                mean_e.append(avg)
-                min_e.append(mn)
-                max_e.append(mx)
-
-                if l_dict is not None:
-                    l_vals = l_dict[beta][a][reg_type]
-                    mean_l.append(sum(l_vals)/len(l_vals))
-
-            if not xs:
-                continue
+            xs, mean_e, min_e, max_e, mean_l = result
 
             color = style["color"]
 
             # =====================
-            # energy
+            # cost
             # =====================
-            if aggregation == "band":
-                plt.fill_between(xs, min_e, max_e,
-                                 color=color, alpha=0.15)
 
-                plt.plot(xs, mean_e,
-                         linestyle="-",
-                         marker=style["marker"],
-                         color=color,
-                         label=f"{model}, beta={beta} energy")
+            label = make_label(mode, model, label_prefix, beta)
+
+            if aggregation == "band":
+
+                ax.fill_between(
+                    xs,
+                    min_e,
+                    max_e,
+                    color=color,
+                    alpha=0.15,
+                )
+
+                ax.plot(
+                    xs,
+                    mean_e,
+                    linestyle="-",
+                    marker=beta_marker_map[beta],
+                    color=color,
+                    label=label,
+                )
 
             else:
+
                 ys = []
+
                 for a in sorted(e_dict[beta].keys()):
+
                     if reg_type not in e_dict[beta][a]:
                         continue
+
                     vals = e_dict[beta][a][reg_type]
                     ys.append(aggregate(vals, aggregation))
 
-                plt.plot(xs, ys,
-                         linestyle="-",
-                         marker=style["marker"],
-                         color=color,
-                         label=f"{model}, beta={beta} energy")
+                ax.plot(
+                    xs,
+                    ys,
+                    linestyle="-",
+                    marker=beta_marker_map[beta],
+                    color=color,
+                    label=label,
+                )
 
             # =====================
             # loss
             # =====================
-            if l_dict is not None and mean_l:
-                plt.plot(xs, mean_l,
-                         linestyle="--",
-                         color=color,
-                         label=f"{model}, beta={beta} energy")
 
-    plt.xlabel("alphasc")
-    plt.ylabel("value")
-    plt.yscale('log')
-    plt.legend()
-    plt.grid()
-    plt.savefig(save_path)
-   
+            if l_dict is not None and mean_l:
+
+                loss_label = make_label(
+                    mode,
+                    model,
+                    label_prefix,
+                    beta,
+                    suffix="loss",
+                )
+
+                ax.plot(
+                    xs,
+                    mean_l,
+                    linestyle="--",
+                    color=color,
+                    label=loss_label,
+                )
+
+    # =====================
+    # axis settings
+    # =====================
+
+    ax.set_xlabel("alphasc")
+    ax.set_ylabel("value")
+
+    ax.set_yscale("log")
+#    ax.set_ylim(1.0e-5, 0.02)
+    ax.set_ylim(top=0.02)
+    ax.set_xlim(0.0, 3.0)
+
+    ax.grid(True)
+
+    # 凡例重複除去
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+
+    ax.legend(by_label.values(), by_label.keys())
+
+    fig.tight_layout()
+    fig.savefig(save_path)
+    if close_fig:
+        plt.close(fig)
