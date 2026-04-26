@@ -12,9 +12,10 @@ class Config:
     verbose: int = 0
     maxiter: int = 10000
     readmode: bool = False
+    mode: str = "nobias"
     backprop: bool = True
     reg_type: str = "x"   # "x": tanh(\alpha<\P_i>+b)^2 or "y": tanh(\alpha<\P_i>)^2
 
-    def normalize(self, use_bias: bool):
-        if not use_bias:
-            self.reg_type = "x"
+#    def normalize(self, use_bias: bool):
+#        if not use_bias:
+#            self.reg_type = "x"

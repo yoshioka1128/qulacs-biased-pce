@@ -5,19 +5,24 @@ from src.core.utils import get_binary_solution, spin_to_number, convert_seconds_
 from src.domain.cost.power_cost import compute_cost
 
 def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian, n_qubits, k, Cmin, Cmax, frob_norm, shift, n_nodes,
-                      alphasc, beta, elapsed_time, iinit, config, USE_BIAS):
+                      alphasc, beta, elapsed_time, iinit, config):
 
     verbose = config.verbose
     LEARN = config.learn
     USE_BACKPROP = config.backprop
+<<<<<<< HEAD
     if USE_BIAS: reg = f'_reg_type{config.reg_type}'
     else: reg = ''
+=======
+    mode = config.mode
+    USE_BIAS = (mode != "nobias")
+>>>>>>> f874fe9c962bef896beee36b3ecd2f69f7325c3a
 
     loss_history = [h[1] for h in history]
     exp_history  = [h[2] for h in history]
     alpha = alphasc * n_qubits ** np.floor(k / 2)
     bit_history  = [
-        get_binary_solution(n_nodes, h[0], ansatz, hamiltonian, n_qubits, USE_BIAS, alpha)
+        get_binary_solution(n_nodes, h[0], ansatz, hamiltonian, n_qubits, mode, alpha)
         for h in history
     ]
     if USE_BIAS: bias_history = [h[3] for h in history]
@@ -59,14 +64,19 @@ def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian
 
     # 出力
     if LEARN == 0:
-        str_backprop = ''
-        str_bias = ''
-        if USE_BACKPROP: str_backprop = '_backprop'
-        if USE_BIAS: str_bias = '_bias'
-        with open(f"{output_dir}/results{str_backprop}{str_bias}_alphasc{alphasc}_beta{beta}_init{iinit}{reg}.json", 'w') as f:
+        suffix = []
+        if USE_BACKPROP: suffix.append("backprop")
+        if mode != "nobias": suffix.append(mode)
+        suffix = "_" + "_".join(suffix) if suffix else ""
+
+#        str_backprop = ''
+#        str_bias = ''
+#        if USE_BACKPROP: str_backprop = '_backprop'
+#        if USE_BIAS: str_bias = '_bias'
+        with open(f"{output_dir}/results{suffix}_alphasc{alphasc}_beta{beta}_init{iinit}.json", 'w') as f:
             json.dump(result_dict, f, indent=4)
 
-        with open(f'{output_dir}/energy{str_backprop}{str_bias}_alphasc{alphasc}_beta{beta}_init{iinit}{reg}.csv', mode='w', newline='', encoding="utf-8") as f:
+        with open(f"{output_dir}/energy{suffix}_alphasc{alphasc}_beta{beta}_init{iinit}.csv", mode='w', newline='', encoding="utf-8") as f:
             writer = csv.writer(f, lineterminator="\n")
 
             if USE_BIAS:

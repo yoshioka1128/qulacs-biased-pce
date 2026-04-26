@@ -8,7 +8,8 @@ def parse_args():
 
     parser.add_argument("--m", type=int, default=60)
     parser.add_argument("--batch", action="store_true")
-    parser.add_argument("--bias", action="store_true")
+    parser.add_argument("--mode", type=str, choices=["nobias", "bias_x", "bias_y"], default="nobias")
+    parser.add_argument("--readmode", action="store_true", help="Enable read mode")
     parser.add_argument("--itime", type=int, default=1)
     parser.add_argument("--nT", type=int, default=24)
     parser.add_argument("--rate", type=float, default=0.1)
@@ -25,8 +26,10 @@ def parse_args():
 
 def main():
     args = parse_args()
-    config = Config()
-    config.normalize(args.bias)
+    config = Config(
+        mode=args.mode,
+        readmode=args.readmode,
+    )
     run(config, args)
 
 if __name__ == "__main__":

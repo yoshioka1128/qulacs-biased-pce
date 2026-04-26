@@ -7,7 +7,7 @@ import json
 from src.core.graph_handler import prepare_int
 from src.core.ansatz_factory import select_ansatz
 from src.core.init_strategy import sample_init
-from src.infra.input_handler import get_user_input, setup_output_dirs
+from src.infra.input_handler import setup_output_dirs
 from src.infra.result_handler import save_results_fast
 from pce import pauli_correlation_encode, show_observable
 from src.core.optimizer import read_optimize_fast
@@ -15,29 +15,32 @@ from src.config.node_config import NODE_CONFIG
 from gurobi_energy_mathopt.data_loader import load_selected_originals, load_gurobi_results
 
 def run(config, args):
-    cfg = NODE_CONFIG[args.m]
+    node_cfg = NODE_CONFIG[args.m, args.rate, args.mode]
 
-    # --- デフォルト（NODE_CONFIG） ---
+    alphasc = args.alphasc if args.alphasc is not None else node_cfg.alphasc
+    beta = args.beta if args.beta is not None else node_cfg.beta
+
     params = {
         "m": args.m,
-        "n_qubits": args.n_qubits or cfg.n_qubits,
-        "k": args.k or cfg.k,
-        "depth": args.depth or cfg.depth,
+        "n_qubits": args.n_qubits or node_cfg.n_qubits,
+        "k": args.k or node_cfg.k,
+        "depth": args.depth or node_cfg.depth,
         "type_ansatz": args.type_ansatz,
         "itime": args.itime,
         "nT": args.nT,
         "rate": args.rate,
-        "bias": args.bias
+        "mode": args.mode,
+#        "bias": args.bias,
+        "alphasc": alphasc,
+        "beta": beta,
     }
 
     if args.batch:
-        run_batch(config, params)
+        run_batch(config, node_cfg, params)
     else:
-        alphasc = args.alphasc if args.alphasc is not None else cfg.alphasc
-        beta = args.beta if args.beta is not None else cfg.beta
-        run_single(config, params, alphasc, beta)
+        run_single(config, node_cfg, params)
 
-def run_batch(config, params):
+def run_batch(config, node_cfg, params):
     beta_list = [-0.1, 0.0, 0.1, 0.2]
 #    alpha_list = [0.1, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
     alpha_list = [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]
@@ -45,9 +48,13 @@ def run_batch(config, params):
     for beta, alphasc in itertools.product(beta_list, alpha_list):
         print(f"\n=== beta={beta}, alphasc={alphasc} ===")
 
-        run_single(config, params, alphasc, beta)
+        batch_params = params.copy()
+        batch_params["alphasc"] = alphasc
+        batch_params["beta"] = beta
 
-def run_single(config, params, alphasc, beta):
+        run_single(config, node_cfg, batch_params)
+
+def run_single(config, node_cfg, params):
     n_qubits = params["n_qubits"]
     depth = params["depth"]
     type_ansatz = params["type_ansatz"]
@@ -63,10 +70,18 @@ def run_single(config, params, alphasc, beta):
     m = params['m']
     depth = params["depth"]
     type_ansatz = params["type_ansatz"]
-    USE_BIAS = params["bias"]
-    if USE_BIAS: bias_type = "_bias"
-    else: bias_type = ""
+
+    mode = params["mode"]
+
+#    USE_BIAS = (mode != "nobias")
+    bias_type = "" if params["mode"] == "nobias" else f"_{params['mode']}"
+#    if USE_BIAS: bias_type = "_bias"
+#    else: bias_type = ""
+#    if mode == "nobias": bias_type = ""
+#    else: bias_type = f"_{mode}" 
     
+    alphasc = params["alphasc"]
+    beta = params["beta"]
     if config.learn:
         alphascs = [0.01, 0.1, 0.5, 1.0, 1.5]
         betas = [-2.0, -1.0, 0.0, 1.0, 2.0]
@@ -74,10 +89,8 @@ def run_single(config, params, alphasc, beta):
         alphascs, betas = [alphasc], [beta]
 
     output_dir = setup_output_dirs(
-        config.learn, "new" if config.use_new else "old",
-        config.nprob, config.ninit, it, nT, rate, m,
+        config, "new", it, nT, rate, m,
         type_ansatz, n_qubits, k, depth,
-        config.method, config.iseed, bias_type
     )
 
     ansatz = select_ansatz(type_ansatz, n_qubits, depth)
@@ -91,12 +104,13 @@ def run_single(config, params, alphasc, beta):
 
     if config.readmode:
         ninit2 = 1
-        iinit = 0
+        iinit = node_cfg.iinit
 
         read_file = os.path.join(
             output_dir,
             f"progress_alphasc{alphasc}_beta{beta}_init{iinit}_iseed{config.iseed}.json"
         )
+        print(read_file)
 
         with open(read_file, "r") as f:
             data = json.load(f)
@@ -152,7 +166,7 @@ def run_single(config, params, alphasc, beta):
                     )
                     result, history, elapsed_time = read_optimize_fast(
                         theta0, config, dJ, dhex, n_qubits, k, ansatz,
-                        pce, alphasc, beta, Cmin, Cmax, frob_norm, shift, iinit, output_dir, USE_BIAS
+                        pce, alphasc, beta, Cmin, Cmax, frob_norm, shift, iinit, output_dir,
                     )
 
                     mineng, minnum = save_results_fast(
@@ -171,7 +185,6 @@ def run_single(config, params, alphasc, beta):
                         elapsed_time,
                         iinit,
                         config,
-                        USE_BIAS,
                     )
 
                     print(alphasc, beta, iprob, iinit, mineng, minnum)

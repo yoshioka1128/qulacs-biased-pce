@@ -16,7 +16,8 @@ def convert_seconds_to_hms(seconds):
     return hours, minutes, seconds
 
 # plot optimization process
-def get_binary_solution(n_nodes, para, ansatz, hamiltonian, n_qubits, USE_BIAS=False, alpha=1.0):
+def get_binary_solution(n_nodes, para, ansatz, hamiltonian, n_qubits, mode, alpha=1.0):
+    USE_BIAS = (mode != "nobias")
     # Set the ansatz parameters and update the quantum state
     if USE_BIAS:
         theta = para[:-1]
