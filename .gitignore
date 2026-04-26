@@ -6,5 +6,6 @@ logs/*.txt
 build/
 .DS_Store
 outputs/power_opt/numpy_param/*.npy
+**/numpy_param/
 
 
