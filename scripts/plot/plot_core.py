@@ -266,7 +266,7 @@ def plot_cost(
 
     ax.set_yscale("log")
 #    ax.set_ylim(1.0e-5, 0.02)
-    ax.set_ylim(top=0.02)
+    ax.set_ylim(1.0e-5, 0.02)
     ax.set_xlim(0.0, 3.0)
 
     ax.grid(True)
