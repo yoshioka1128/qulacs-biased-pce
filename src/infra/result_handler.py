@@ -10,13 +10,8 @@ def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian
     verbose = config.verbose
     LEARN = config.learn
     USE_BACKPROP = config.backprop
-<<<<<<< HEAD
-    if USE_BIAS: reg = f'_reg_type{config.reg_type}'
-    else: reg = ''
-=======
     mode = config.mode
     USE_BIAS = (mode != "nobias")
->>>>>>> f874fe9c962bef896beee36b3ecd2f69f7325c3a
 
     loss_history = [h[1] for h in history]
     exp_history  = [h[2] for h in history]
