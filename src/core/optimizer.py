@@ -22,18 +22,12 @@ def read_optimize_fast(
     verbose = config.verbose
     USE_BACKPROP = config.backprop
     maxiter = config.maxiter
-<<<<<<< HEAD
-    reg_type = config.reg_type
-    if USE_BIAS: reg = f'_reg_type{reg_type}'
-    else: reg = ''
-=======
     USE_BIAS = (mode != "nobias")
 #    reg_type = None if mode == "nobias" else mode[-1]
 #    reg = "" if reg_type is None else f"_reg_type{reg_type}"
 #    reg_type = config.reg_type
 #    if USE_BIAS: reg = f'_reg_type{reg_type}'
 #    else: reg = ''
->>>>>>> f874fe9c962bef896beee36b3ecd2f69f7325c3a
 
     alpha = alphasc * n_qubits ** np.floor(k / 2)
 
@@ -55,56 +49,6 @@ def read_optimize_fast(
     # =========================
     # Loss / Gradient
     # =========================
-<<<<<<< HEAD
-    if USE_BIAS:
-        if reg_type == 'x':
-            def loss_fn(params):
-                theta, bias = split_params(params)
-                loss, _ = compute_loss_bias_x(
-                    J, h, n_qubits, theta, ansatz, hamiltonian,
-                    alpha, beta,
-                    bias=bias
-                )
-                return loss
-            def grad_fn_bias(params):
-                grad = backprop_bias_x(
-                    params,
-                    n_qubits,
-                    len(h),
-                    ansatz=ansatz,
-                    W=J,
-                    h=h,
-                    hamiltonian=hamiltonian,
-                    alpha=alpha,
-                    beta=beta,
-                    nu=1.0,
-                )
-                return grad.flatten()
-
-        elif reg_type == 'y':
-            def loss_fn(params):
-                theta, bias = split_params(params)
-                loss, _ = compute_loss_bias_xy(
-                    J, h, n_qubits, theta, ansatz, hamiltonian,
-                    alpha, beta,
-                    bias=bias,
-                )
-                return loss
-            def grad_fn_bias(params):
-                grad = backprop_bias_y(
-                    params,
-                    n_qubits,
-                    len(h),
-                    ansatz=ansatz,
-                    W=J,
-                    h=h,
-                    hamiltonian=hamiltonian,
-                    alpha=alpha,
-                    beta=beta,
-                    nu=1.0,
-                )
-                return grad.flatten()
-=======
     if mode == "bias_x":
 #        if reg_type == 'x':
         def loss_fn(params):
@@ -153,7 +97,6 @@ def read_optimize_fast(
                 nu=1.0,
             )
             return grad.flatten()
->>>>>>> f874fe9c962bef896beee36b3ecd2f69f7325c3a
     else: # USE_BIAS = False
         def loss_fn(params):
             theta, bias = split_params(params)
