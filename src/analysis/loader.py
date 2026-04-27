@@ -1,49 +1,76 @@
-# loader.y
 import re
 import json
 from pathlib import Path
 from collections import defaultdict
 
-pattern = re.compile(r"alphasc([-\d\.]+)_beta([-\d\.]+)")
+pattern = re.compile(
+    r"alphasc(?P<alpha>[-\d\.]+)_beta(?P<beta>[-\d\.]+)_init(?P<init>\d+)"
+)
 
 def load_data(data_dir: Path, use_bias: bool):
-    energy_data = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
-    loss_data = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    energy_data = defaultdict(
+        lambda: defaultdict(
+            lambda: defaultdict(list)
+        )
+    )
+
+    loss_data = defaultdict(
+        lambda: defaultdict(
+            lambda: defaultdict(list)
+        )
+    )
 
     for file in data_dir.glob("results_backprop*.json"):
         fname = file.name
 
-        # --- biasフィルタ ---
-        if use_bias:
-            if "results_backprop_bias_" not in fname:
-                continue
-        else:
-            if "results_backprop_bias_" in fname:
-                continue
+        # -------------------
+        # bias filter
+        # -------------------
+        is_bias = "results_backprop_bias_" in fname
 
-        # --- reg_type判定 ---
+        if use_bias and not is_bias:
+            continue
+
+        if not use_bias and is_bias:
+            continue
+
+        # -------------------
+        # reg_type
+        # -------------------
         if use_bias:
-            if "_reg_typex" in fname:
+            if "results_backprop_bias_x_" in fname:
                 reg_type = "x"
-            elif "_reg_typey" in fname:
+            elif "results_backprop_bias_y_" in fname:
                 reg_type = "y"
             else:
-                reg_type = "unknown"
+                continue
         else:
             reg_type = "no_reg"
 
+        # -------------------
+        # parse filename
+        # -------------------
         match = pattern.search(fname)
         if not match:
             continue
 
-        alphasc = float(match.group(1))
-        beta = float(match.group(2))
+        alphasc = float(match.group("alpha"))
+        beta = float(match.group("beta"))
 
-        with open(file, "r") as f:
-            js = json.load(f)
+        # -------------------
+        # load json
+        # -------------------
+        try:
+            with open(file, "r") as f:
+                js = json.load(f)
 
-        energy = js["Calculated Minimum Energy [norm, row]"][0]
-        loss = js["Corresponding loss function"]
+            energy = js["Calculated Minimum Energy [norm, row]"][0]
+            loss = js["Corresponding loss function"]
+
+        except Exception as e:
+            print(f"ERROR: {file}")
+            print(e)
+            continue
 
         energy_data[beta][alphasc][reg_type].append(energy)
         loss_data[beta][alphasc][reg_type].append(loss)
