@@ -1,8 +1,7 @@
 # runner.py
 import numpy as np
 import pandas as pd
-import os, json, itertools
-import json
+import os, json, itertools, shutil, json
 
 from src.core.graph_handler import prepare_int
 from src.core.ansatz_factory import select_ansatz
@@ -34,6 +33,9 @@ def run(config, args):
         "alphasc": alphasc,
         "beta": beta,
     }
+
+    if args.readmode:
+        params["nT"] = 1
 
     if args.batch:
         run_batch(config, node_cfg, params)
@@ -98,24 +100,33 @@ def run_single(config, node_cfg, params):
     if config.verbose:
         print(ansatz.get_qulacs_circuit())
 
-    # read mode
     init_para = None
     ninit2 = config.ninit
 
+    # read mode
     if config.readmode:
         ninit2 = 1
         iinit = node_cfg.iinit
 
+        suffix = []
+        if config.backprop: suffix.append("backprop")
+        if mode != "nobias": suffix.append(mode)
+        suffix = "_" + "_".join(suffix) if suffix else ""
+
+        read_dir = (f'outputs/power_opt/time1_nT24_rate{rate}_{m}nodes_{n_qubits}qubits_{k}body_'
+                      f'ninit5_depth5_{type_ansatz}_method{config.method}_iseed{config.iseed}/')
         read_file = os.path.join(
-            output_dir,
-            f"progress_alphasc{alphasc}_beta{beta}_init{iinit}_iseed{config.iseed}.json"
+            read_dir,
+            f"results{suffix}_alphasc{alphasc}_beta{beta}_init{iinit}.json"
         )
         print(read_file)
+        dst_file = os.path.join(output_dir, os.path.basename(read_file))
+        shutil.copy2(read_file, dst_file)
 
         with open(read_file, "r") as f:
             data = json.load(f)
 
-        init_para = np.array(data["parameters"])
+        init_para = np.array(data["Minimum Parameters"])
 
         output_dir = os.path.join(output_dir, "read")
         os.makedirs(output_dir, exist_ok=True)
