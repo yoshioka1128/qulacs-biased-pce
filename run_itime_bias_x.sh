@@ -3,7 +3,8 @@
 mkdir -p logs
 
 #for m in 18 60 210 756 2772; do
-for m in 2772; do
+#for m in 2772; do
+for m in 18; do
     for i in {11..20}; do
         echo "Running m=$m, itime=$i"
 
