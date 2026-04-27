@@ -3,13 +3,16 @@ import re
 import argparse
 import os
 import csv
+import json
 
 # ----------------------
 # 引数
 # ----------------------
-parser = argparse.ArgumentParser()
-parser.add_argument("--rate", type=float, default=0.1, help="rate (default: 0.1)")
-parser.add_argument("--topk", type=int, default=5, help="number of outputs (default: 5)")
+parser = argparse.ArgumentParser(
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter
+)
+parser.add_argument("--rate", type=float, default=0.1, help="rate")
+parser.add_argument("--topk", type=int, default=5, help="number of outputs")
 args = parser.parse_args()
 
 rate = args.rate
@@ -37,11 +40,10 @@ pattern = re.compile(
 )
 
 def extract_value(filepath):
-    with open(filepath) as f:
-        for i, line in enumerate(f):
-            if i == 2:
-                return float(line.split()[0].replace(",", ""))
-    return None
+    with open(filepath, "r") as f:
+        data = json.load(f)
+
+    return data["Calculated Minimum Energy [norm, row]"][0]
 
 def parse_filename(filepath):
     m = pattern.search(filepath)
@@ -53,8 +55,8 @@ def parse_filename(filepath):
         "init": int(m.group("init")),
         "bias": "True" if "bias" in filepath else "False",
         "reg_type": (
-            "typex" if "typex" in filepath else
-            "typey" if "typey" in filepath else
+            "x" if "bias_x" in filepath else
+            "y" if "bias_y" in filepath else
             "-"
         )
     }
@@ -106,7 +108,7 @@ with open(save_path, "w", newline="", encoding="utf-8") as f:
         print()
 
         # bias
-        files = glob.glob(f"{base}_bias/results_backprop_bias_alphasc*.json")
+        files = glob.glob(f"{base}/results_backprop_bias_*_alphasc*.json")
         topk = find_topk(files, k=topk_num)
         for r in topk:
             writer.writerow([

@@ -1,14 +1,20 @@
 import argparse
 from pathlib import Path
 import matplotlib.pyplot as plt
+
 from src.analysis.loader import load_data
 from scripts.plot.plot_core import plot_cost, DEFAULT_BETAS
 
+
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--m", type=int, default=18)
-    parser.add_argument("--mode", choices=["mean", "min", "band"], default="band")
-    parser.add_argument("--model", choices=["no_bias", "bias_x", "bias_y"], default="no_bias")
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument("--m", type=int, default=18, help="problem size")
+    parser.add_argument("--mode", choices=["mean", "min", "band"], default="band",
+                        help="aggregation mode")
+    parser.add_argument("--model", choices=["no_bias", "bias_x", "bias_y", "all"], default="all",
+                        help="plot target model")
     args = parser.parse_args()
 
     file_map = {
@@ -22,62 +28,54 @@ def main():
     BASE_DIR = Path(__file__).resolve().parents[2]
     file = file_map[args.m]
 
-    DATA_DIR_NO_BIAS = BASE_DIR / "outputs" / "power_opt" / file
-    DATA_DIR_WITH_BIAS = BASE_DIR / "outputs" / "power_opt" / f"{file}_bias"
-
+    DATA_DIR = BASE_DIR / "outputs" / "power_opt" / file
     SAVE_DIR = BASE_DIR / "outputs" / "power_opt" / "figures"
     SAVE_DIR.mkdir(parents=True, exist_ok=True)
 
-    cost_nb, loss_nb = load_data(DATA_DIR_NO_BIAS, use_bias=False)
-    cost_wb, loss_wb = load_data(DATA_DIR_WITH_BIAS, use_bias=True)
-    aggregation = args.mode
-    save_path = SAVE_DIR / f"{aggregation}_cost.png"
+    # --- load ---
+    cost_nb, loss_nb = load_data(DATA_DIR, use_bias=False)
+    cost_wb, loss_wb = load_data(DATA_DIR, use_bias=True)
 
+    aggregation = args.mode
+
+    # =============================
+    # ① 手法比較
+    # =============================
     plot_cost(
         cost_nb,
         cost_wb,
         DEFAULT_BETAS,
         aggregation=aggregation,
-        save_path=save_path,
-#        loss_nb=loss_nb,
-#        loss_wb=loss_wb,
+        save_path=SAVE_DIR / f"{aggregation}_cost_method.png",
+        loss_nb=loss_nb,
+        loss_wb=loss_wb,
         mode="method",
     )
 
-    plot_cost(
-        cost_nb,
-        cost_wb,
-        DEFAULT_BETAS,
-        aggregation=aggregation,
-        save_path=SAVE_DIR / "bias_x.png",
-        loss_nb=loss_nb,
-        loss_wb=loss_wb,
-        mode="beta",
-        model='bias_x',
-    )
-    plot_cost(
-        cost_nb,
-        cost_wb,
-        DEFAULT_BETAS,
-        aggregation=aggregation,
-        save_path=SAVE_DIR / "bias_y.png",
-        loss_nb=loss_nb,
-        loss_wb=loss_wb,
-        mode="beta",
-        model='bias_y',
-    )
-    plot_cost(
-        cost_nb,
-        cost_wb,
-        DEFAULT_BETAS,
-        aggregation=aggregation,
-        save_path=SAVE_DIR / "no_bias.png",
-        loss_nb=loss_nb,
-        loss_wb=loss_wb,
-        mode="beta",
-        model='no_bias',
-    )
+    # =============================
+    # ② β色分け（モデル指定）
+    # =============================
+    if args.model == "all":
+        models = ["bias_x", "bias_y", "no_bias"]
+    else:
+        models = [args.model]
+
+    for model in models:
+        plot_cost(
+            cost_nb,
+            cost_wb,
+            DEFAULT_BETAS,
+            aggregation=aggregation,
+            save_path=SAVE_DIR / f"{aggregation}_cost_{model}.png",
+            loss_nb=loss_nb,
+            loss_wb=loss_wb,
+            mode="beta",
+            model=model,
+        )
+
     plt.show()
+
 
 if __name__ == "__main__":
     main()
+    
