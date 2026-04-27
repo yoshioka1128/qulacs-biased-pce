@@ -12,7 +12,7 @@ import numpy as np
 # Optimization wrapper
 # =========================
 def read_optimize_fast(
-        theta0, config, J, h, n_qubits, k, ansatz, hamiltonian,
+        init_para, config, J, h, n_qubits, k, ansatz, hamiltonian,
         alphasc, beta, Cmin, Cmax, frob_norm, shift,
         iinit, output_dir,
 ):
@@ -40,11 +40,10 @@ def read_optimize_fast(
         if USE_BIAS: return params[:-1], params[-1]
         return params, None
 
-    def merge_params(theta, bias):
-        if USE_BIAS: return np.concatenate([theta, [bias]])
-        return theta
-
-    params_init = merge_params(theta0, 0.0)
+#    def merge_params(theta, bias):
+#        if USE_BIAS: return np.concatenate([theta, [bias]])
+#        return theta
+#    init_para = merge_params(theta0, 0.0)
 
     # =========================
     # Loss / Gradient
@@ -135,11 +134,11 @@ def read_optimize_fast(
     json_path = f"{output_dir}/progress{suffix}_alphasc{alphasc}_beta{beta}_init{iinit}.json"
 
     # ---- initial evaluation ----
-    theta, bias = split_params(params_init)
-    loss0 = loss_fn(params_init)
+    theta, bias = split_params(init_para)
+    loss0 = loss_fn(init_para)
     exp0 = compute_expectation(n_qubits, theta, ansatz, hamiltonian)
 
-    if USE_BIAS: history.append((params_init.copy(), loss0, exp0, bias)) # nparam + 1
+    if USE_BIAS: history.append((init_para.copy(), loss0, exp0, bias)) # nparam + 1
     else: history.append((theta.copy(), loss0, exp0)) # nparam
 
     if verbose:
@@ -219,7 +218,7 @@ def read_optimize_fast(
         if USE_BIAS:
             result = minimize(
                 loss_fn,
-                params_init,
+                init_para,
                 jac=grad_fn_bias,
                 callback=callback,
                 method=method,
@@ -228,7 +227,7 @@ def read_optimize_fast(
         else:
             result = minimize(
                 loss_fn,
-                params_init,
+                init_para,
                 jac=grad_fn,
                 callback=callback,
                 method=method,
@@ -237,7 +236,7 @@ def read_optimize_fast(
     else:
         result = minimize(
             loss_fn,
-            params_init,
+            init_para,
             callback=callback,
             method=method,
             options={"disp": verbose, "maxiter": maxiter},

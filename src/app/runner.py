@@ -75,13 +75,6 @@ def run_single(config, node_cfg, params):
 
     mode = params["mode"]
 
-#    USE_BIAS = (mode != "nobias")
-    bias_type = "" if params["mode"] == "nobias" else f"_{params['mode']}"
-#    if USE_BIAS: bias_type = "_bias"
-#    else: bias_type = ""
-#    if mode == "nobias": bias_type = ""
-#    else: bias_type = f"_{mode}" 
-    
     alphasc = params["alphasc"]
     beta = params["beta"]
     if config.learn:
@@ -119,10 +112,10 @@ def run_single(config, node_cfg, params):
             read_dir,
             f"results{suffix}_alphasc{alphasc}_beta{beta}_init{iinit}.json"
         )
-        print(read_file)
-        dst_file = os.path.join(output_dir, os.path.basename(read_file))
-        shutil.copy2(read_file, dst_file)
 
+        dst_file = os.path.join(output_dir, os.path.basename(read_file))
+        print('copy from', read_file, 'to', dst_file)
+        shutil.copy2(read_file, dst_file)
         with open(read_file, "r") as f:
             data = json.load(f)
 
@@ -169,14 +162,9 @@ def run_single(config, node_cfg, params):
 
             for beta in betas:
                 for iinit in range(ninit2):
-                    theta0 = sample_init(
-                        config.readmode,
-                        rng,
-                        ansatz.get_parameter_count(),
-                        init_para
-                    )
+                    init_para = sample_init(config.readmode, mode, rng, ansatz.get_parameter_count(), init_para)
                     result, history, elapsed_time = read_optimize_fast(
-                        theta0, config, dJ, dhex, n_qubits, k, ansatz,
+                        init_para, config, dJ, dhex, n_qubits, k, ansatz,
                         pce, alphasc, beta, Cmin, Cmax, frob_norm, shift, iinit, output_dir,
                     )
 

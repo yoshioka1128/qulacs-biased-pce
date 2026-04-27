@@ -1,0 +1,2 @@
+copy from outputs/power_opt/time1_nT24_rate0.1_60nodes_6qubits_3body_ninit5_depth5_all2all_methodBFGS_iseed42/results_backprop_bias_y_alphasc1.5_beta0.0_init4.json to outputs/power_opt/time17_nT1_rate0.1_60nodes_6qubits_3body_ninit5_depth5_all2all_methodBFGS_iseed42/results_backprop_bias_y_alphasc1.5_beta0.0_init4.json
+1.5 0.0 0 0 4.1269917181251826e-05 5675713449426944
