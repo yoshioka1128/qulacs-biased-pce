@@ -59,12 +59,12 @@ NODE_CONFIG = {
         calpha=2, bound=0.1, nseed=7, subcounts=4001
     ),
 
-#    (2772, 0.1, "nobias"): NodeConfig(
-#        n_qubits=12, k=6, ninit=5, iinit=3, imax0=5,
-#        alphasc=0.1,
-#        beta=0.0, depth=5, strbp="_backprop",
-#        calpha=2, bound=0.1, nseed=9, subcounts=4001
-#    ),
+    (2772, 0.1, "nobias"): NodeConfig(
+        alphasc=0.1, beta=0.0, iinit=1,
+        n_qubits=12, k=6, ninit=5, imax0=5,
+        depth=5, strbp="_backprop",
+        calpha=2, bound=0.1, nseed=9, subcounts=4001
+    ),
 
     (18, 0.1, "bias_x"): NodeConfig(
         alphasc=2.5, beta=0.2, iinit=2,
@@ -98,6 +98,13 @@ NODE_CONFIG = {
         calpha=2, bound=0.1, nseed=7, subcounts=4001
     ),
 
+    (2772, 0.1, "bias_x"): NodeConfig(
+        alphasc=0.1, beta=0.0, iinit=1,
+        n_qubits=12, k=6, ninit=5, imax0=5,
+        depth=5, strbp="_backprop",
+        calpha=2, bound=0.1, nseed=9, subcounts=4001
+    ),
+
     (18, 0.1, "bias_y"): NodeConfig(
         alphasc=2.5, beta=0.1, iinit=1,
         n_qubits=4, k=2, ninit=5, imax0=1,
@@ -128,5 +135,12 @@ NODE_CONFIG = {
         n_qubits=10, k=5, ninit=5, imax0=3,
         depth=5, strbp="_backprop",
         calpha=2, bound=0.1, nseed=7, subcounts=4001
+    ),
+
+    (2772, 0.1, "bias_y"): NodeConfig(
+        alphasc=0.1, beta=0.0, iinit=1,
+        n_qubits=12, k=6, ninit=5, imax0=5,
+        depth=5, strbp="_backprop",
+        calpha=2, bound=0.1, nseed=9, subcounts=4001
     ),
 }
