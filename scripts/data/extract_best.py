@@ -55,9 +55,9 @@ def parse_filename(filepath):
         "init": int(m.group("init")),
         "bias": "True" if "bias" in filepath else "False",
         "reg_type": (
-            "x" if "bias_x" in filepath else
-            "y" if "bias_y" in filepath else
-            "-"
+            "bias_x" if "bias_x" in filepath else
+            "bias_y" if "bias_y" in filepath else
+            "no_bias"
         )
     }
 
@@ -97,28 +97,42 @@ with open(save_path, "w", newline="", encoding="utf-8") as f:
         for r in topk:
             writer.writerow([
                 m,
-                r["bias"],
+                r["reg_type"],
                 r["alphasc"],
                 r["beta"],
                 r["init"],
-                r["reg_type"],
                 r["value"]
             ])
-            print(f"{m}, {r['bias']}, {r['alphasc']}, {r['beta']}, {r['init']}, {r['reg_type']}, {r['value']}")
+            print(f"{m}, {r['reg_type']}, {r['alphasc']}, {r['beta']}, {r['init']}, {r['value']}")
         print()
 
-        # bias
-        files = glob.glob(f"{base}/results_backprop_bias_*_alphasc*.json")
+        # bias_x
+        files = glob.glob(f"{base}/results_backprop_bias_x*_alphasc*.json")
         topk = find_topk(files, k=topk_num)
         for r in topk:
             writer.writerow([
                 m,
-                r["bias"],
+                r["reg_type"],
                 r["alphasc"],
                 r["beta"],
                 r["init"],
-                r["reg_type"],
                 r["value"]
             ])
-            print(f"{m}, {r['bias']}, {r['alphasc']}, {r['beta']}, {r['init']}, {r['reg_type']}, {r['value']}")
+            print(f"{m}, {r['reg_type']}, {r['alphasc']}, {r['beta']}, {r['init']}, {r['value']}")
         print()
+
+        # bias_y
+        files = glob.glob(f"{base}/results_backprop_bias_y*_alphasc*.json")
+        topk = find_topk(files, k=topk_num)
+        for r in topk:
+            writer.writerow([
+                m,
+                r["reg_type"],
+                r["alphasc"],
+                r["beta"],
+                r["init"],
+                r["value"]
+            ])
+            print(f"{m}, {r['reg_type']}, {r['alphasc']}, {r['beta']}, {r['init']}, {r['value']}")
+        print()
+        

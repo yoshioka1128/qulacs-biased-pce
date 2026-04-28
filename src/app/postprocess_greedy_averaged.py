@@ -189,7 +189,7 @@ def main():
 
         csv_path = os.path.join(
             "outputs/power_opt",
-            f"pce_greedy_summary_rate{rate}_{mode}.csv"
+            f"pce_greedy_averaged_summary_rate{rate}_{mode}.csv"
         )
 
         with open(csv_path, "w", newline="") as csvfile:
