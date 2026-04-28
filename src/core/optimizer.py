@@ -248,3 +248,75 @@ def read_optimize_fast(
 
     return g_theta
 
+
+def greedy_ising(J, h, z0=None):
+    """
+    Apply a greedy spin-flip algorithm to the Ising model (J, h).
+    Spins are treated directly as z ∈ {-1, +1}.
+
+    Parameters
+    ----------
+    J : ndarray (N, N)
+        Symmetric interaction matrix (diagonal elements assumed to be 0)
+    h : ndarray (N,)
+        Local magnetic field
+    z0 : ndarray (N,), optional
+        Initial spin configuration (elements can be ±1 or 0).
+        If 0, the value is first greedily assigned to -1 or +1.
+        If None, all spins are initialized to +1.
+
+    Returns
+    -------
+    z : ndarray (N,)
+        Final spin configuration (±1)
+    E : float
+        Final energy
+    """
+    N = len(h)
+
+    # Initialize spins
+    if z0 is None:
+        z = np.ones(N, dtype=int)
+    else:
+        z = np.array(z0, dtype=int).copy()
+        if not np.all(np.isin(z, [-1, 0, 1])):
+            raise ValueError("Elements of z0 must be -1, 0, or +1")
+
+    # --- Step 1: Assign spins where z=0 greedily ---
+    for i in range(N):
+        if z[i] == 0:
+            # Compute effective local field using currently assigned spins
+            effective_field = h[i] + np.dot(J[i], z * (z != 0))  # ignore unassigned spins
+            if effective_field > 0:
+                z[i] = -1
+            elif effective_field < 0:
+                z[i] = +1
+            else:
+                z[i] = np.random.choice([-1, 1])  # tie-break
+
+    # --- Step 2: Apply standard greedy spin-flip ---
+    chosen = np.zeros(N, dtype=bool)
+    local_field = h + J @ z
+
+    while True:
+        delta = np.full(N, np.inf)
+        for j in range(N):
+            if not chosen[j]:
+                # ΔE_j = -2 z_j (h_j + sum_i J_ij z_i)
+                delta[j] = -2 * z[j] * local_field[j]
+
+        j_best = np.argmin(delta)
+        if delta[j_best] >= 0:
+            break
+
+        # スピン反転
+        z[j_best] *= -1
+        chosen[j_best] = True
+
+        # local_field を更新
+        local_field += 2 * J[:, j_best] * z[j_best]
+
+    # エネルギー計算
+    E = float(z @ np.tril(J, -1) @ z + h @ z)
+
+    return z.tolist(), E

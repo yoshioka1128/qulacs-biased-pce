@@ -29,6 +29,9 @@ def parse_args():
 
 def main():
     args = parse_args()
+    if args.readmode and args.itime == 1:
+        args.itime = 11
+
     config = Config(
         mode=args.mode,
         readmode=args.readmode,
