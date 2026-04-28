@@ -17,6 +17,9 @@ def get_result_file_from_node_config(
     method: str,
     iseed: int,
     type_ansatz: str = "all2all",
+    it: int =1,
+    nT: int = 24,
+    readmode: bool = False,
 ):
     """
     NODE_CONFIG を使って
@@ -39,15 +42,6 @@ def get_result_file_from_node_config(
     ninit = cfg.ninit
     strbp = cfg.strbp
 
-    read_dir = (
-        f"outputs/power_opt/"
-        f"time1_nT24_rate{rate}_"
-        f"{nodes}nodes_{n_qubits}qubits_{k}body_"
-        f"ninit{ninit}_depth{depth}_"
-        f"{type_ansatz}_method{method}_"
-        f"iseed{iseed}"
-    )
-
     if mode == "nobias":
         suffix = strbp
 
@@ -60,78 +54,38 @@ def get_result_file_from_node_config(
     else:
         raise ValueError(f"unknown mode: {mode}")
 
-    read_file = os.path.join(
-        read_dir,
-        f"results{suffix}_"
-        f"alphasc{alphasc}_"
-        f"beta{beta}_"
-        f"init{iinit}.json"
-    )
-
-    if not os.path.exists(read_file):
-        raise FileNotFoundError(
-            f"result file not found:\n{read_file}"
+    if readmode:
+        read_dir = (
+            f"outputs/power_opt/"
+            f"time{it}_nT1_rate{rate}_"
+            f"{nodes}nodes_{n_qubits}qubits_{k}body_"
+            f"ninit{ninit}_depth{depth}_"
+            f"{type_ansatz}_method{method}_"
+            f"iseed{iseed}/read"
         )
-
-    return read_dir, read_file
-
-def get_result_file_from_node_config(
-    nodes: int,
-    rate: float,
-    mode: str,
-    method: str,
-    iseed: int,
-    type_ansatz: str = "all2all",
-):
-    """
-    NODE_CONFIG を使って
-    results json を一意に取得する
-    """
-
-    key = (nodes, rate, mode)
-
-    if key not in NODE_CONFIG:
-        raise ValueError(f"NODE_CONFIG not found: {key}")
-
-    cfg = NODE_CONFIG[key]
-
-    alphasc = cfg.alphasc
-    beta = cfg.beta
-    iinit = cfg.iinit
-    n_qubits = cfg.n_qubits
-    k = cfg.k
-    depth = cfg.depth
-    ninit = cfg.ninit
-    strbp = cfg.strbp
-
-    read_dir = (
-        f"outputs/power_opt/"
-        f"time1_nT24_rate{rate}_"
-        f"{nodes}nodes_{n_qubits}qubits_{k}body_"
-        f"ninit{ninit}_depth{depth}_"
-        f"{type_ansatz}_method{method}_"
-        f"iseed{iseed}"
-    )
-
-    if mode == "nobias":
-        suffix = strbp
-
-    elif mode == "bias_x":
-        suffix = f"{strbp}_bias_x"
-
-    elif mode == "bias_y":
-        suffix = f"{strbp}_bias_y"
-
+        read_file = os.path.join(
+            read_dir,
+            f"results{suffix}_"
+            f"alphasc{alphasc}_"
+            f"beta{beta}_"
+            f"init0.json"
+        )
     else:
-        raise ValueError(f"unknown mode: {mode}")
-
-    read_file = os.path.join(
-        read_dir,
-        f"results{suffix}_"
-        f"alphasc{alphasc}_"
-        f"beta{beta}_"
-        f"init{iinit}.json"
-    )
+        read_dir = (
+            f"outputs/power_opt/"
+            f"time1_nT24_rate{rate}_"
+            f"{nodes}nodes_{n_qubits}qubits_{k}body_"
+            f"ninit{ninit}_depth{depth}_"
+            f"{type_ansatz}_method{method}_"
+            f"iseed{iseed}"
+        )
+        read_file = os.path.join(
+            read_dir,
+            f"results{suffix}_"
+            f"alphasc{alphasc}_"
+            f"beta{beta}_"
+            f"init{iinit}.json"
+        )
 
     if not os.path.exists(read_file):
         raise FileNotFoundError(
