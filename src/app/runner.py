@@ -11,6 +11,7 @@ from src.infra.result_handler import save_results_fast
 from pce import pauli_correlation_encode, show_observable
 from src.core.optimizer import read_optimize_fast
 from src.config.node_config import NODE_CONFIG
+from src.analysis.loader import get_result_file_from_node_config
 from gurobi_energy_mathopt.data_loader import load_selected_originals, load_gurobi_results
 
 def run(config, args):
@@ -96,7 +97,7 @@ def run_single(config, node_cfg, params):
     init_para = None
     ninit2 = config.ninit
 
-    # read mode
+    # readmode
     if config.readmode:
         ninit2 = 1
         iinit = node_cfg.iinit
@@ -106,13 +107,15 @@ def run_single(config, node_cfg, params):
         if mode != "nobias": suffix.append(mode)
         suffix = "_" + "_".join(suffix) if suffix else ""
 
-        read_dir = (f'outputs/power_opt/time1_nT24_rate{rate}_{m}nodes_{n_qubits}qubits_{k}body_'
-                      f'ninit5_depth5_{type_ansatz}_method{config.method}_iseed{config.iseed}/')
-        read_file = os.path.join(
-            read_dir,
-            f"results{suffix}_alphasc{alphasc}_beta{beta}_init{iinit}.json"
+#        read_dir = (f'outputs/power_opt/time1_nT24_rate{rate}_{m}nodes_{n_qubits}qubits_{k}body_'
+#                      f'ninit5_depth5_{type_ansatz}_method{config.method}_iseed{config.iseed}/')
+#        read_file = os.path.join(
+#            read_dir,
+#            f"results{suffix}_alphasc{alphasc}_beta{beta}_init{iinit}.json"
+#        )
+        read_dir, read_file = get_result_file_from_node_config(
+            m, rate, mode, node_cfg.method, node_cfg.iseed, node_cfg.type_ansatz,
         )
-
         dst_file = os.path.join(output_dir, os.path.basename(read_file))
         print('copy from', read_file, 'to', dst_file)
         shutil.copy2(read_file, dst_file)
