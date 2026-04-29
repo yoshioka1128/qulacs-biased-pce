@@ -147,7 +147,7 @@ def run_greedy_postprocess(
     # =====================================================
     # greedy post-processing
     # =====================================================
-    x_local1, cost_local1 = greedy_ising(
+    x_local1, cost_local = greedy_ising(
         dJ_sym,
         dhex,
         x,
@@ -157,8 +157,8 @@ def run_greedy_postprocess(
 
     result_data = {
         "Calculated Minimum Energy [norm, row]": [
-            norm(cost_local1),
-            cost_local1,
+            norm(cost_local),
+            cost_local,
         ],
         "Solution for Minimum Energy": x_local1,
     }
@@ -175,7 +175,7 @@ def run_greedy_postprocess(
         nodes,
         it,
         record["cost w/o pp"],
-        norm(cost_local1),
+        norm(cost_local),
         norm(record["loss"]),
     )
 
@@ -183,7 +183,7 @@ def run_greedy_postprocess(
         "nodes": nodes,
         "it": it,
         "cost_wo_pp": record["cost w/o pp"],
-        "cost": norm(cost_local1),
+        "cost": norm(cost_local),
         "loss": norm(record["loss"]),
         "mode": mode,
     }
