@@ -188,12 +188,12 @@ def main():
     for (mode, rate), rows in results_by_mode_rate.items():
 
         csv_path = os.path.join(
-            "outputs/power_opt",
+            "outputs/power_opt/csv",
             f"pce_greedy_averaged_summary_rate{rate}_{mode}.csv"
         )
 
         with open(csv_path, "w", newline="") as csvfile:
-            writer = csv.writer(csvfile)
+            writer = csv.writer(csvfile, lineterminator="\n")
 
             writer.writerow([
                 "nodes",

@@ -42,17 +42,15 @@ def get_result_file_from_node_config(
     ninit = cfg.ninit
     strbp = cfg.strbp
 
-    if mode == "nobias":
-        suffix = strbp
-
-    elif mode == "bias_x":
-        suffix = f"{strbp}_bias_x"
-
-    elif mode == "bias_y":
-        suffix = f"{strbp}_bias_y"
-
-    else:
-        raise ValueError(f"unknown mode: {mode}")
+    suffix = f"{strbp}_{mode}"
+#    if mode == "nobias":
+#        suffix = strbp
+#    elif mode == "bias_x":
+#        suffix = f"{strbp}_bias_x"
+#    elif mode == "bias_y":
+#        suffix = f"{strbp}_bias_y"
+#    else:
+#        raise ValueError(f"unknown mode: {mode}")
 
     if readmode:
         read_dir = (
