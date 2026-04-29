@@ -1,25 +1,8 @@
 {
-  "Initial Solution (all-1)": [
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1
+  "Calculated Minimum Energy [norm, raw]": [
+    0.0002427043771723994,
+    -2.033943539954282
   ],
-  "Calculated Minimum Energy [raw]": -2.033943539954281,
   "Solution for Minimum Energy": [
     1,
     1,
