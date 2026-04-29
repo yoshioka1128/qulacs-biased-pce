@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/yoshioka/git/qulacs-biased-pce/src/app/main.py", line 42, in <module>
+    main()
+    ~~~~^^
+  File "/home/yoshioka/git/qulacs-biased-pce/src/app/main.py", line 39, in main
+    run(config, args)
+    ~~~^^^^^^^^^^^^^^
+  File "/home/yoshioka/git/qulacs-biased-pce/src/app/runner.py", line 18, in run
+    node_cfg = NODE_CONFIG[args.m, args.rate, args.mode]
+               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: (756, 0.3, 'bias_y')
