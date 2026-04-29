@@ -27,8 +27,6 @@ type_ansatz = "all2all"
 # ★ 固定（normalize取得用）
 DUMMY_MODE = "nobias"
 
-
-# =========================================================
 def build_norm_function(record, shift):
     Cmin, Cmax, frob_norm, _ = record["normalize"]
 
@@ -38,7 +36,7 @@ def build_norm_function(record, shift):
     return norm
 
 
-def run_greedy_all1(nodes: int, rate: float):
+def run_greedy_allzero(nodes: int, rate: float):
     key = (nodes, rate, DUMMY_MODE)
 
     if key not in NODE_CONFIG:
@@ -127,7 +125,7 @@ def main():
             continue
 
         try:
-            result = run_greedy_all1(nodes, rate)
+            result = run_greedy_allzero(nodes, rate)
             if result:
                 results_by_rate[rate].append(result)
 

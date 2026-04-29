@@ -1,4 +1,4 @@
-# src/app/postprocess_greedy_time_resolved.py
+# src/app/postprocess_greedy_time_resolved_allzero.py
 
 import os
 import json
@@ -28,7 +28,7 @@ method = "BFGS"
 type_ansatz = "all2all"
 
 # 実行対象
-MODES = ["nobias", "bias_x", "bias_y"]
+DUMMY_MODE = "nobias"
 
 # time resolved 用
 IT_START = 11
@@ -36,15 +36,7 @@ IT_END = 20
 NT = 1
 
 
-# =========================================================
-# helpers
-# =========================================================
-
 def build_norm_function(record, shift):
-    """
-    legacyコードの normalize をそのまま利用
-    """
-
     Cmin, Cmax, frob_norm, _ = record["normalize"]
 
     def norm(raw_cost):
@@ -52,14 +44,12 @@ def build_norm_function(record, shift):
 
     return norm
 
-
-def run_greedy_postprocess(
+def run_greedy_allzero_postprocess(
     nodes: int,
     rate: float,
-    mode: str,
     it: int,
 ):
-    key = (nodes, rate, mode)
+    key = (nodes, rate, DUMMY_MODE)
 
     if key not in NODE_CONFIG:
         print(f"[skip] config not found: {key}")
@@ -68,41 +58,30 @@ def run_greedy_postprocess(
     cfg = NODE_CONFIG[key]
 
     # =====================================================
-    # NODE_CONFIG から result file を一意に取得
+    # 保存先 directory を取得
+    # （既存の result file を使って target_dir を特定）
     # =====================================================
     try:
         target_dir, result_file = get_result_file_from_node_config(
             nodes=nodes,
             rate=rate,
-            mode=mode,
+            mode=DUMMY_MODE,
             method=method,
             iseed=iseed,
             type_ansatz=type_ansatz,
             it=it,
             nT=1,
-            readmode=True
+            readmode=True,
         )
     except Exception as e:
         print(
             f"[skip] result file not found: "
-            f"nodes={nodes}, mode={mode}, error={e}"
+            f"nodes={nodes}, it={it}, error={e}"
         )
         return None
 
-    print("\n=== processing ===")
-    print(f"nodes={nodes}")
-    print(f"rate={rate}")
-    print(f"mode={mode}")
-    print(f"it={it}")
-    print(f"result_file={result_file}")
-
-    # =====================================================
-    # quantum result 読み込み
-    # =====================================================
     meta = parse_result_filename(result_file)
-
     data = load_result_json(result_file)
-
     record = build_result_record(
         meta=meta,
         data=data,
@@ -112,10 +91,16 @@ def run_greedy_postprocess(
         best_file=result_file,
     )
 
+    print("\n=== processing ===")
+    print(f"nodes={nodes}")
+    print(f"rate={rate}")
+    print(f"it={it}")
+
     # =====================================================
     # Gurobiデータ読み込み
     # =====================================================
     df_selected = load_selected_originals(nodes, iseed)
+
     if df_selected is None:
         print(
             f"[skip] csv not found: "
@@ -136,18 +121,18 @@ def run_greedy_postprocess(
         rate,
     )
 
-    # =====================================================
-    # quantum result solution
-    # =====================================================
-    x = [int(v) for v in record["solution"]]
-
     # greedy は対称化した相互作用を使用
     dJ_sym = dJ + dJ.T
 
     # =====================================================
+    # ★ all-1 初期解
+    # =====================================================
+    x = [1] * nodes
+
+    # =====================================================
     # greedy post-processing
     # =====================================================
-    x_local1, cost_local = greedy_ising(
+    x_local, cost_local = greedy_ising(
         dJ_sym,
         dhex,
         x,
@@ -156,61 +141,53 @@ def run_greedy_postprocess(
     norm = build_norm_function(record, shift)
 
     result_data = {
-        "Calculated Minimum Energy [norm, row]": [
+        "Calculated Minimum Energy [norm, raw]": [
             norm(cost_local),
             cost_local,
         ],
-        "Solution for Minimum Energy": x_local1,
+        "Solution for Minimum Energy": x_local,
     }
 
     output_path = os.path.join(
         target_dir,
-        f"pce_greedy_time_resolved_it{it}_{os.path.basename(result_file)}"
+        f"greedy_allzero_time_resolved_it{it}_results.json"
     )
 
     with open(output_path, "w") as f:
         json.dump(result_data, f, indent=2)
 
     print(
-        nodes,
-        it,
-        record["cost w/o pp"],
-        norm(cost_local),
-        norm(record["loss"]),
+        f"saved -> {output_path}"
     )
 
     return {
         "nodes": nodes,
         "it": it,
-        "cost_wo_pp": record["cost w/o pp"],
         "cost": norm(cost_local),
-        "loss": norm(record["loss"]),
-        "mode": mode,
     }
 
 
 # =========================================================
 # main
 # =========================================================
-
 def main():
-    results_by_mode_rate = defaultdict(list)
+    results_by_rate = defaultdict(list)
 
     for it in range(IT_START, IT_END + 1):
         for (nodes, rate, mode), _cfg in NODE_CONFIG.items():
-            if mode not in MODES:
+            # ★ modeは無視
+            if mode != DUMMY_MODE:
                 continue
 
             try:
-                result = run_greedy_postprocess(
+                result = run_greedy_allzero_postprocess(
                     nodes=nodes,
                     rate=rate,
-                    mode=mode,
                     it=it,
                 )
 
                 if result is not None:
-                    results_by_mode_rate[(mode, rate)].append(result)
+                    results_by_rate[(mode, rate)].append(result)
 
             except Exception:
                 print(
@@ -222,10 +199,10 @@ def main():
     # =====================================================
     # mode + rate ごとに CSV 保存
     # =====================================================
-    for (mode, rate), rows in results_by_mode_rate.items():
+    for (mode, rate), rows in results_by_rate.items():
         csv_path = os.path.join(
             "outputs/power_opt/csv",
-            f"pce_greedy_time_resolved_summary_rate{rate}_{mode}.csv"
+            f"greedy_time_resolved_summary_rate{rate}.csv"
         )
 
         with open(csv_path, "w", newline="") as csvfile:
@@ -234,18 +211,14 @@ def main():
             writer.writerow([
                 "nodes",
                 "it",
-                "cost_wo_pp",
                 "cost",
-                "loss",
             ])
 
             for row in rows:
                 writer.writerow([
                     row["nodes"],
                     row["it"],
-                    row["cost_wo_pp"],
                     row["cost"],
-                    row["loss"],
                 ])
 
         print(f"saved -> {csv_path}")
