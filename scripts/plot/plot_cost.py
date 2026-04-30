@@ -11,18 +11,19 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument("--m", type=int, default=18, help="problem size")
-    parser.add_argument("--mode", choices=["mean", "min", "band"], default="band",
-                        help="aggregation mode")
     parser.add_argument("--model", choices=["no_bias", "bias_x", "bias_y", "all"], default="all",
                         help="plot target model")
+    parser.add_argument("--rate", type=float, default=0.1, help="rate of target pwower")
+    parser.add_argument("--mode", choices=["mean", "min", "band"], default="band",
+                        help="aggregation mode")
     args = parser.parse_args()
-
+    rate = args.rate
     file_map = {
-        18: "time1_nT24_rate0.1_18nodes_4qubits_2body_ninit5_depth5_all2all_methodBFGS_iseed42",
-        60: "time1_nT24_rate0.1_60nodes_6qubits_3body_ninit5_depth5_all2all_methodBFGS_iseed42",
-        210: "time1_nT24_rate0.1_210nodes_8qubits_4body_ninit5_depth5_all2all_methodBFGS_iseed42",
-        756: "time1_nT24_rate0.1_756nodes_10qubits_5body_ninit5_depth5_all2all_methodBFGS_iseed42",
-        2772: "time1_nT24_rate0.1_2772nodes_12qubits_6body_ninit5_depth5_all2all_methodBFGS_iseed42",
+        18: f"time1_nT24_rate{rate}_18nodes_4qubits_2body_ninit5_depth5_all2all_methodBFGS_iseed42",
+        60: f"time1_nT24_rate{rate}_60nodes_6qubits_3body_ninit5_depth5_all2all_methodBFGS_iseed42",
+        210: f"time1_nT24_rate{rate}_210nodes_8qubits_4body_ninit5_depth5_all2all_methodBFGS_iseed42",
+        756: f"time1_nT24_rate{rate}_756nodes_10qubits_5body_ninit5_depth5_all2all_methodBFGS_iseed42",
+        2772: f"time1_nT24_rate{rate}_2772nodes_12qubits_6body_ninit5_depth5_all2all_methodBFGS_iseed42",
     }
 
     BASE_DIR = Path(__file__).resolve().parents[2]
@@ -46,7 +47,7 @@ def main():
         cost_wb,
         DEFAULT_BETAS,
         aggregation=aggregation,
-        save_path=SAVE_DIR / f"{aggregation}_cost_method.png",
+        save_path=SAVE_DIR / "pdf" / f"cost_{aggregation}_cost_method.pdf",
         loss_nb=loss_nb,
         loss_wb=loss_wb,
         mode="method",
@@ -66,7 +67,7 @@ def main():
             cost_wb,
             DEFAULT_BETAS,
             aggregation=aggregation,
-            save_path=SAVE_DIR / f"{aggregation}_cost_{model}.png",
+            save_path=SAVE_DIR / "pdf" / f"cost_{aggregation}_cost_{model}.pdf",
             loss_nb=loss_nb,
             loss_wb=loss_wb,
             mode="beta",
