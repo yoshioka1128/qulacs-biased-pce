@@ -54,52 +54,52 @@ NODE_CONFIG = {
     ),
 
     (756, 0.1, "nobias"): NodeConfig(
-        alphasc=0.5, beta=0.0, iinit=4, 
+        alphasc=0.5, beta=0.0, iinit=4,
         n_qubits=10, k=5, ninit=5, imax0=3,
         calpha=2, bound=0.1, nseed=7, 
     ),
     (756, 0.2, "nobias"): NodeConfig(
-        alphasc=0.5, beta=0.0, iinit=4, 
+        alphasc=0.5, beta=0.0, iinit=2,
         n_qubits=10, k=5, ninit=5, imax0=3,
         calpha=2, bound=0.1, nseed=7, 
     ),
     (756, 0.3, "nobias"): NodeConfig(
-        alphasc=0.5, beta=0.0, iinit=4, 
+        alphasc=0.5, beta=0.0, iinit=0,
         n_qubits=10, k=5, ninit=5, imax0=3,
         calpha=2, bound=0.1, nseed=7, 
     ),
     (756, 0.4, "nobias"): NodeConfig(
-        alphasc=0.5, beta=0.0, iinit=4, 
+        alphasc=0.5, beta=0.0, iinit=2,
         n_qubits=10, k=5, ninit=5, imax0=3,
         calpha=2, bound=0.1, nseed=7, 
     ),
     (756, 0.5, "nobias"): NodeConfig(
-        alphasc=0.5, beta=0.0, iinit=4, 
+        alphasc=0.5, beta=0.0, iinit=2,
         n_qubits=10, k=5, ninit=5, imax0=3,
         calpha=2, bound=0.1, nseed=7, 
     ),
     (756, 0.1, "bias_y"): NodeConfig(
-        alphasc=0.5, beta=0.0, iinit=4, 
+        alphasc=0.5, beta=0.0, iinit=4,
         n_qubits=10, k=5, ninit=5, imax0=3,
         calpha=2, bound=0.1, nseed=7, 
     ),
     (756, 0.2, "bias_y"): NodeConfig(
-        alphasc=0.5, beta=0.0, iinit=4, 
+        alphasc=0.5, beta=0.0, iinit=4,
         n_qubits=10, k=5, ninit=5, imax0=3,
         calpha=2, bound=0.1, nseed=7, 
     ),
     (756, 0.3, "bias_y"): NodeConfig(
-        alphasc=0.5, beta=0.0, iinit=4, 
+        alphasc=0.5, beta=0.0, iinit=4,
         n_qubits=10, k=5, ninit=5, imax0=3,
         calpha=2, bound=0.1, nseed=7, 
     ),
     (756, 0.4, "bias_y"): NodeConfig(
-        alphasc=0.5, beta=0.0, iinit=4, 
+        alphasc=0.5, beta=0.0, iinit=4,
         n_qubits=10, k=5, ninit=5, imax0=3,
         calpha=2, bound=0.1, nseed=7, 
     ),
     (756, 0.5, "bias_y"): NodeConfig(
-        alphasc=0.5, beta=0.0, iinit=4, 
+        alphasc=0.5, beta=0.0, iinit=4,
         n_qubits=10, k=5, ninit=5, imax0=3,
         calpha=2, bound=0.1, nseed=7, 
     ),
@@ -136,6 +136,18 @@ NODE_CONFIG = {
         alphasc=0.5, beta=0.0, iinit=3, 
         n_qubits=10, k=5, ninit=5, imax0=3,
         calpha=2, bound=0.1, nseed=7, 
+    ),
+
+    (756, 0.3, "bias_x"): NodeConfig(
+        alphasc=0.5, beta=0.0, iinit=3,
+        n_qubits=10, k=5, ninit=5, imax0=3,
+        calpha=2, bound=0.1, nseed=7,
+    ),
+
+    (756, 0.4, "bias_x"): NodeConfig(
+        alphasc=0.5, beta=0.0, iinit=3,
+        n_qubits=10, k=5, ninit=5, imax0=3,
+        calpha=2, bound=0.1, nseed=7,
     ),
 
     (2772, 0.1, "bias_x"): NodeConfig(
