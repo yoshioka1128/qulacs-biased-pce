@@ -49,13 +49,13 @@ def model_solution_to_decimal(model, L, lsb_at_index0=True):
     return number, bits
 
 def get_random_consumers(L, rng):
-    df = load_power_data()
+    df = load_power_data(L)
     if L <= 2143:
         consumers = df[df['Consumer'].str.startswith('Original')]['Consumer'].unique().tolist()
-    elif L == 10296:
-        input_file = f"./param-enemane/param/power_consumption_hourly_mixup_restricted_large.csv"
-        df = pd.read_csv(input_file)
-        consumers = df['Consumer'].unique().tolist()
+#    elif L == 10296:
+#        input_file = f"./param-enemane/param/power_consumption_hourly_mixup_restricted_large.csv"
+#        df = pd.read_csv(input_file)
+#        consumers = df['Consumer'].unique().tolist()
     else:
         consumers = df['Consumer'].unique().tolist()
     consumers_list = rng.choice(consumers, size=L, replace=False)
