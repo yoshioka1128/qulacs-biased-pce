@@ -250,28 +250,6 @@ def read_optimize_fast(
 
 
 def greedy_ising(J, h, z0=None):
-    """
-    Apply a greedy spin-flip algorithm to the Ising model (J, h).
-    Spins are treated directly as z ∈ {-1, +1}.
-
-    Parameters
-    ----------
-    J : ndarray (N, N)
-        Symmetric interaction matrix (diagonal elements assumed to be 0)
-    h : ndarray (N,)
-        Local magnetic field
-    z0 : ndarray (N,), optional
-        Initial spin configuration (elements can be ±1 or 0).
-        If 0, the value is first greedily assigned to -1 or +1.
-        If None, all spins are initialized to +1.
-
-    Returns
-    -------
-    z : ndarray (N,)
-        Final spin configuration (±1)
-    E : float
-        Final energy
-    """
     N = len(h)
 
     # Initialize spins
