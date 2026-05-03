@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from src.analysis.aggregator import aggregate
+import pltutils
 
 DEFAULT_BETAS = [-0.1, 0.0, 0.1, 0.2]
 
@@ -78,7 +79,7 @@ def build_datasets(
             0.2: "C3",
         }
 
-        if model == "no_bias":
+        if model == "nobias":
             e_dict = cost_nb
             l_dict = loss_nb
             reg_type = "no_reg"
@@ -148,19 +149,23 @@ def collect_series(e_dict, l_dict, beta, reg_type):
 
 
 def plot_cost(
+        ax,
         cost_nb,
         cost_wb,
         target_betas,
         aggregation,
-        save_path,
+#        save_path,
         loss_nb=None,
         loss_wb=None,
         mode="method",
-        model="no_bias",
-        close_fig=False,
+        model="nobias",
+        show_label=True,
+        add_legend=True,
+        xmin=None,
+        xmax=None,
+#        close_fig=False,
 ):
-
-    fig, ax = plt.subplots()
+#    fig, ax = plt.subplots()
 
     datasets = build_datasets(
         mode=mode,
@@ -187,35 +192,64 @@ def plot_cost(
                 continue
 
             xs, mean_e, min_e, max_e, mean_l = result
-
+            xs_orig = np.array(xs)
             color = style["color"]
 
             # =====================
             # cost
             # =====================
 
-            label = make_label(mode, model, label_prefix, beta)
+#            label = make_label(mode, model, label_prefix, beta)
 
             if aggregation == "band":
+                mean_e = np.array(mean_e)
+                min_e = np.array(min_e)
+                max_e = np.array(max_e)
+
+                xs_plot = xs_orig.copy()
+                mean_plot = mean_e.copy()
+                min_plot = min_e.copy()
+                max_plot = max_e.copy()
+                if xmin is not None or xmax is not None:
+                    mask = np.ones_like(xs_plot, dtype=bool)
+
+                    if xmin is not None:
+                        mask &= xs_plot >= xmin
+                    if xmax is not None:
+                        mask &= xs_plot <= xmax
+
+                    xs_plot = xs_plot[mask]
+                    mean_plot = mean_plot[mask]
+                    min_plot = min_plot[mask]
+                    max_plot = max_plot[mask]
 
                 ax.fill_between(
-                    xs,
-                    min_e,
-                    max_e,
+                    xs_plot,
+                    min_plot,
+                    max_plot,
                     color=color,
                     alpha=0.15,
                 )
 
                 ax.plot(
-                    xs,
-                    mean_e,
+                    xs_plot,
+                    mean_plot,
                     linestyle="-",
                     marker=beta_marker_map[beta],
                     color=color,
-                    label=label,
+                    label=rf"$\beta ={beta}$",
                 )
 
             else:
+                mean_e = np.array(mean_e)
+                min_e = np.array(min_e)
+                max_e = np.array(max_e)
+                if xmin is not None:
+                    mask = xs >= xmin
+                    xs = xs[mask]
+                    mean_e = mean_e[mask]
+                    min_e = min_e[mask]
+                    max_e = max_e[mask]
 
                 ys = []
 
@@ -261,27 +295,17 @@ def plot_cost(
     # =====================
     # axis settings
     # =====================
+#    ax.set_yscale("log")
+    ax.set_xlim(xmin, xmax)
 
-    ax.set_xlabel("alphasc")
-    ax.set_ylabel("value")
+    ax.grid(True, linestyle=":", linewidth=0.5)
 
-    ax.set_yscale("log")
-#    ax.set_ylim(1.0e-5, 0.02)
-    ax.set_ylim(1.0e-5, 0.02)
-    ax.set_xlim(0.0, 3.0)
+    if add_legend:
+        handles, labels = ax.get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
 
-    ax.grid(True)
+        ax.legend(by_label.values(), by_label.keys())
 
-    # 凡例重複除去
-    handles, labels = ax.get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))
-
-    ax.legend(by_label.values(), by_label.keys())
-
-    fig.tight_layout()
-    fig.savefig(save_path)
-    if close_fig:
-        plt.close(fig)
 
 def plot_stacked_bar_by_hour(
     ax,
@@ -370,7 +394,7 @@ def finalize_plot(
     )
 
     # Grid lines
-    ax.grid(True)
+    ax.grid(True, linestyle=":", linewidth=0.5)
 
     # Adjust figure layout
     fig.subplots_adjust(left=0.13, right=0.98, top=0.98, bottom=0.12)
