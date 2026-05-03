@@ -4,13 +4,17 @@ import os
 import csv
 from collections import defaultdict
 import traceback
-
+#from src.config.node_config import NODE_CONFIG
+from src.config.full_config import build_config
+from src.config.problem_config import PROBLEM_CONFIG
 from src.config.node_config import NODE_CONFIG
+
 from src.analysis.loader import (
     get_result_file_from_node_config,
     load_result_json,
     build_result_record,
 )
+from src.core.spin_init import generate_spin
 from src.analysis.parser import parse_result_filename
 from src.core.utils import prepare_int_from_d
 from src.core.optimizer import greedy_ising
@@ -26,6 +30,7 @@ type_ansatz = "all2all"
 
 # ★ 固定（normalize取得用）
 DUMMY_MODE = "nobias"
+DUMMY_MODEL = "averaged"
 
 def build_norm_function(record, shift):
     Cmin, Cmax, frob_norm, _ = record["normalize"]
@@ -39,17 +44,19 @@ def build_norm_function(record, shift):
 def run_greedy_allzero(nodes: int, rate: float):
     key = (nodes, rate, DUMMY_MODE)
 
-    if key not in NODE_CONFIG:
+    if key not in PROBLEM_CONFIG:
         print(f"[skip] config not found: {key}")
         return
 
-    cfg = NODE_CONFIG[key]
+#    cfg = PROBLEM_CONFIG[key]
+    cfg = build_config(nodes, rate, DUMMY_MODE, DUMMY_MODEL)
 
     # =====================================================
     # normalize取得（量子結果は使わない）
     # =====================================================
     try:
         _, result_file = get_result_file_from_node_config(
+            cfg,
             nodes=nodes,
             rate=rate,
             mode=DUMMY_MODE,
@@ -59,6 +66,15 @@ def run_greedy_allzero(nodes: int, rate: float):
         )
     except Exception:
         print(f"[skip] result file not found: nodes={nodes}")
+        _, result_file = get_result_file_from_node_config(
+            cfg,
+            nodes=nodes,
+            rate=rate,
+            mode=DUMMY_MODE,
+            method=method,
+            iseed=iseed,
+            type_ansatz=type_ansatz,
+        )
         return
 
     meta = parse_result_filename(result_file)
@@ -96,7 +112,7 @@ def run_greedy_allzero(nodes: int, rate: float):
     # =====================================================
     # ★ all-1 初期解
     # =====================================================
-    x = [1] * nodes
+    x = generate_spin('allzero', nodes)
 
     dJ_sym = dJ + dJ.T
 
@@ -119,7 +135,8 @@ def run_greedy_allzero(nodes: int, rate: float):
 def main():
     results_by_rate = defaultdict(list)
 
-    for (nodes, rate, mode), _cfg in NODE_CONFIG.items():
+    for (nodes, rate, mode), _cfg in PROBLEM_CONFIG.items():
+        print(nodes, rate, mode)
         # ★ modeは無視
         if mode != DUMMY_MODE:
             continue
