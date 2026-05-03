@@ -4,34 +4,31 @@ import os
 import numpy as np
 from pathlib import Path
 from collections import defaultdict
-from src.config.node_config import NODE_CONFIG
+from src.config.problem_config import PROBLEM_CONFIG
+from src.config.full_config import FullConfig
 
 pattern = re.compile(
     r"alphasc(?P<alpha>[-\d\.]+)_beta(?P<beta>[-\d\.]+)_init(?P<init>\d+)"
 )
 
 def get_result_file_from_node_config(
+    cfg: FullConfig,
     nodes: int,
     rate: float,
     mode: str,
     method: str,
     iseed: int,
+    model: str = "averaged",
     type_ansatz: str = "all2all",
     it: int =1,
     nT: int = 24,
     readmode: bool = False,
 ):
-    """
-    NODE_CONFIG を使って
-    results json を一意に取得する
-    """
 
-    key = (nodes, rate, mode)
+    key = (nodes, rate, model)
 
-    if key not in NODE_CONFIG:
-        raise ValueError(f"NODE_CONFIG not found: {key}")
-
-    cfg = NODE_CONFIG[key]
+    if key not in PROBLEM_CONFIG:
+        raise ValueError(f"PROBLEM_CONFIG not found: {key}")
 
     alphasc = cfg.alphasc
     beta = cfg.beta
