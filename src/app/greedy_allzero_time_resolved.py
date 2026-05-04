@@ -7,7 +7,9 @@ import traceback
 
 from collections import defaultdict
 
+from src.config.full_config import build_config
 from src.config.node_config import NODE_CONFIG
+from src.config.problem_config import PROBLEM_CONFIG
 from src.analysis.loader import (
     get_result_file_from_node_config,
     load_result_json,
@@ -44,18 +46,14 @@ def build_norm_function(record, shift):
 
     return norm
 
-def run_greedy_allzero_postprocess(
-    nodes: int,
-    rate: float,
-    it: int,
-):
-    key = (nodes, rate, DUMMY_MODE)
+def run_greedy_allzero_postprocess(nodes: int, rate: float, model: str, it: int):
+    key = (nodes, rate, model)
 
-    if key not in NODE_CONFIG:
+    if key not in PROBLEM_CONFIG:
         print(f"[skip] config not found: {key}")
-        return None
+        return
 
-    cfg = NODE_CONFIG[key]
+    cfg = build_config(nodes, rate, model, DUMMY_MODE)
 
     # =====================================================
     # 保存先 directory を取得
@@ -63,8 +61,10 @@ def run_greedy_allzero_postprocess(
     # =====================================================
     try:
         target_dir, result_file = get_result_file_from_node_config(
+            cfg,
             nodes=nodes,
             rate=rate,
+            model=model,
             mode=DUMMY_MODE,
             method=method,
             iseed=iseed,
@@ -76,7 +76,7 @@ def run_greedy_allzero_postprocess(
     except Exception as e:
         print(
             f"[skip] result file not found: "
-            f"nodes={nodes}, it={it}, error={e}"
+            f"nodes={nodes}, rate={rate}, model{model}, it={it}, error={e}"
         )
         return None
 
@@ -174,32 +174,22 @@ def main():
     results_by_rate = defaultdict(list)
 
     for it in range(IT_START, IT_END + 1):
-        for (nodes, rate, mode), _cfg in NODE_CONFIG.items():
-            # ★ modeは無視
-            if mode != DUMMY_MODE:
+        for (nodes, rate, model) in PROBLEM_CONFIG.keys():
+            if model != "time_resolved":
                 continue
-
             try:
-                result = run_greedy_allzero_postprocess(
-                    nodes=nodes,
-                    rate=rate,
-                    it=it,
-                )
-
+                result = run_greedy_allzero_postprocess(nodes, rate, model, it=it)
                 if result is not None:
-                    results_by_rate[(mode, rate)].append(result)
+                    results_by_rate[rate].append(result)
 
             except Exception:
-                print(
-                    f"[error] nodes={nodes}, "
-                    f"rate={rate}, mode={mode}, it={it}"
-                )
+                print(f"[error] nodes={nodes}, rate={rate}, model={model}, it={it}")
                 traceback.print_exc()
 
     # =====================================================
     # mode + rate ごとに CSV 保存
     # =====================================================
-    for (mode, rate), rows in results_by_rate.items():
+    for rate, rows in results_by_rate.items():
         csv_path = os.path.join(
             "outputs/power_opt/csv",
             f"greedy_time_resolved_summary_rate{rate}.csv"

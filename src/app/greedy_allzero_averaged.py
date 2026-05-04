@@ -4,10 +4,8 @@ import os
 import csv
 from collections import defaultdict
 import traceback
-#from src.config.node_config import NODE_CONFIG
 from src.config.full_config import build_config
 from src.config.problem_config import PROBLEM_CONFIG
-from src.config.node_config import NODE_CONFIG
 
 from src.analysis.loader import (
     get_result_file_from_node_config,
@@ -30,7 +28,6 @@ type_ansatz = "all2all"
 
 # ★ 固定（normalize取得用）
 DUMMY_MODE = "nobias"
-DUMMY_MODEL = "averaged"
 
 def build_norm_function(record, shift):
     Cmin, Cmax, frob_norm, _ = record["normalize"]
@@ -41,15 +38,14 @@ def build_norm_function(record, shift):
     return norm
 
 
-def run_greedy_allzero(nodes: int, rate: float):
-    key = (nodes, rate, DUMMY_MODE)
+def run_greedy_allzero(nodes: int, rate: float, model: str):
+    key = (nodes, rate, model)
 
     if key not in PROBLEM_CONFIG:
         print(f"[skip] config not found: {key}")
         return
 
-#    cfg = PROBLEM_CONFIG[key]
-    cfg = build_config(nodes, rate, DUMMY_MODE, DUMMY_MODEL)
+    cfg = build_config(nodes, rate, model, DUMMY_MODE)
 
     # =====================================================
     # normalize取得（量子結果は使わない）
@@ -59,21 +55,16 @@ def run_greedy_allzero(nodes: int, rate: float):
             cfg,
             nodes=nodes,
             rate=rate,
+            model=model,
             mode=DUMMY_MODE,
             method=method,
             iseed=iseed,
             type_ansatz=type_ansatz,
         )
-    except Exception:
-        print(f"[skip] result file not found: nodes={nodes}")
-        _, result_file = get_result_file_from_node_config(
-            cfg,
-            nodes=nodes,
-            rate=rate,
-            mode=DUMMY_MODE,
-            method=method,
-            iseed=iseed,
-            type_ansatz=type_ansatz,
+    except Exception as e:
+        print(
+            f"[skip] result file not found:"
+            f"nodes={nodes}, rate={rate}, model{model}, error={e}"
         )
         return
 
@@ -135,19 +126,17 @@ def run_greedy_allzero(nodes: int, rate: float):
 def main():
     results_by_rate = defaultdict(list)
 
-    for (nodes, rate, mode), _cfg in PROBLEM_CONFIG.items():
-        print(nodes, rate, mode)
-        # ★ modeは無視
-        if mode != DUMMY_MODE:
+    for (nodes, rate, model) in PROBLEM_CONFIG.keys():
+        if model != "averaged":
             continue
-
+        print(nodes, rate, model)
         try:
-            result = run_greedy_allzero(nodes, rate)
+            result = run_greedy_allzero(nodes, rate, model)
             if result:
                 results_by_rate[rate].append(result)
 
         except Exception:
-            print(f"[error] nodes={nodes}, rate={rate}")
+            print(f"[error] nodes={nodes}, rate={rate}, model={model}")
             traceback.print_exc()
 
     # CSV保存
