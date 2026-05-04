@@ -14,7 +14,7 @@ from src.analysis.aggregator import proc_from_mean
 
 from scripts.plot.plot_core import plot_stacked_bar_by_hour, finalize_plot, plot_negawatt_with_std
 
-from src.config.node_config import NODE_CONFIG
+from src.config.full_config import build_config
 from gurobi_energy_mathopt.data_loader import BASE_DIR_GUROBI, load_gurobi_results
 from param_enemane.data_loader import BASE_DIR_PARAM
 
@@ -22,7 +22,7 @@ nodes = int(input('node数を入力してください (756): ') or 756)
 rate = float(input('rate (0.1): ') or 0.1)
 algo = str(input('algo [pce, greedy, gurobi] (pce): ') or 'pce')
 if algo == 'pce':
-    bias_mode = str(input('bias_mode [nobias, bias_x, bias_y] (bias_y): ') or 'bias_y')
+    bias_mode = str(input('bias_mode [nobias, bias_x, bias_y] (nobias): ') or 'nobias')
     if bias_mode == "nobias": str_bias_mode = ""
     else: str_bias_mode = f"{bias_mode}_"
 
@@ -33,15 +33,15 @@ if algo == 'pce':
 else:
     bias_mode = 'nobias'
 
-node_cfg = NODE_CONFIG[nodes, 0.1, bias_mode]
-n_qubits = node_cfg.n_qubits
-k = node_cfg.k
-depth = node_cfg.depth
-ninit = node_cfg.ninit
-init = node_cfg.iinit
-alphasc = node_cfg.alphasc
-beta = node_cfg.beta
-iseed = node_cfg.iseed
+cfg = build_config(nodes, rate, "time_resolved", bias_mode)
+n_qubits = cfg.n_qubits
+k = cfg.k
+depth = cfg.depth
+ninit = cfg.ninit
+init = cfg.iinit
+alphasc = cfg.alphasc
+beta = cfg.beta
+iseed = cfg.iseed
 
 str_large=""
 if nodes == 10296: str_large="_large"
@@ -158,7 +158,6 @@ output_df_ws = pd.DataFrame({
 if algo == "pce":
     file_suffix = (
         f"_pce_{str_greedy}{str_bias_mode}"
-        f"{nodes}nodes_rate{rate}_iseed{iseed}"
     )
 elif algo == "greedy":
     file_suffix = "_greedy_allzero_"

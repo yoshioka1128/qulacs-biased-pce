@@ -1,3 +1,4 @@
+import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from src.analysis.aggregator import aggregate
@@ -454,3 +455,61 @@ def plot_negawatt_with_std(
         ax.set_ylim(0, ylim_max)
 
     ax.grid(True)
+
+def procurement_load_three_methods(rate):
+    base = "outputs/power_opt/csv"
+
+    file1 = f"{base}/procurement_pce_greedy_756nodes_rate{rate}_iseed42_start11_end20.csv"
+    file2 = f"{base}/procurement_greedy_allzero_756nodes_rate{rate}_iseed42_start11_end20.csv"
+    file3 = f"{base}/procurement_gurobi_756nodes_rate{rate}_iseed42_start11_end20.csv"
+
+    return pd.read_csv(file1), pd.read_csv(file2), pd.read_csv(file3)
+
+
+def procurement_compute_metrics(df):
+    hours = df["hours"]
+    diff = np.abs(df["total_means"] - df["proc"])
+    ratio = df["total_std_means"] / df["total_means"]
+    return hours, diff, ratio
+
+
+def procurement_plot_one(ax_top, ax_bottom, dfs, show_ylabel=True, panel_labels=None):
+    labels = ["pce simulation", "greedy (all-zero)", "optimal"]
+    markers = ['o', 'x', 'D']
+    colors = ['C0', 'green', 'C1']
+
+    for df, label, m, color in zip(dfs, labels, markers, colors):
+        h, d, r = procurement_compute_metrics(df)
+        ax_top.plot(h, d*1000, marker=m, label=label, color=color, clip_on=False, zorder=3)
+        ax_bottom.plot(h, r, marker=m, label=label, color=color, clip_on=False, zorder=3)
+
+    if show_ylabel:
+        ax_top.set_ylabel(r"deviation $|P_t - P_t^{\rm target}|$ [kWh]")
+        ax_bottom.set_ylabel(r"coefficient of variation $\sigma_t / P_t$")
+
+    ax_top.grid(True, which="both", linestyle=":", linewidth=0.5)
+    ax_bottom.grid(True, which="both", linestyle=":", linewidth=0.5)
+
+    # =========================
+    # (a)(b) ラベル
+    # =========================
+    if panel_labels is not None:
+        top_label, bottom_label = panel_labels
+
+        ax_top.text(
+            0.02, 0.95, top_label,
+            transform=ax_top.transAxes,
+            va="top"
+        )
+
+        ax_bottom.text(
+            0.02, 0.95, bottom_label,
+            transform=ax_bottom.transAxes,
+            va="top"
+        )
+    ax_top.set_xticks(range(11, 21))
+    ax_top.set_ylim(bottom=0.0)
+    ax_top.yaxis.set_label_coords(-0.11, 0.5)
+    ax_bottom.set_xticks(range(11, 21))
+    ax_bottom.set_ylim(bottom=0.0)
+    ax_bottom.yaxis.set_label_coords(-0.11, 0.5)
