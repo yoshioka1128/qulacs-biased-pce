@@ -17,6 +17,8 @@ class FullConfig:
     iinit: int
     imax0: int
     nseed: int
+    it: int
+    nT: int
 
     # optional
     ninit: int = 5
@@ -29,9 +31,9 @@ class FullConfig:
     chbetaiinit: Optional[List[int]] = None
     betas: Optional[List[float]] = None
 
-def build_config(node, rate, mode, model):
+def build_config(node, rate, model, mode):
     node_cfg = NODE_CONFIG[node]
-    prob_cfg = PROBLEM_CONFIG[node, rate, mode]
-    exp_cfg  = EXPERIMENT_CONFIG[node, rate, mode, model]
+    prob_cfg = PROBLEM_CONFIG[node, rate, model]
+    exp_cfg  = EXPERIMENT_CONFIG[node, rate, mode]
 
     return FullConfig(**node_cfg, **prob_cfg, **exp_cfg) #, **prob_cfg, **exp_cfg)

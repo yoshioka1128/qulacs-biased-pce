@@ -4,14 +4,14 @@ PROBLEM_CONFIG = {
     (18, 0.1, "averaged"): {
         "it":1, "nT":24
     },
-    (18, 0.5, "time_resolved"): {
+    (18, 0.1, "time_resolved"): {
         "it":1, "nT":24
     },
 
     (60, 0.1, "averaged"): {
         "it":1, "nT":24
     },
-    (60, 0.5, "time_resolved"): {
+    (60, 0.1, "time_resolved"): {
         "it":1, "nT":24
     },
 
@@ -21,7 +21,7 @@ PROBLEM_CONFIG = {
     (210, 0.1, "time_resolved"): {
         "it":1, "nT":24
     },
-    (210, 0.5, "time_resolved"): {
+    (210, 0.1, "time_resolved"): {
         "it":1, "nT":24
     },
 
@@ -52,21 +52,18 @@ PROBLEM_CONFIG = {
     (756, 0.4, "time_resolved"): {
         "it":1, "nT":24
     },
-    (756, 0.5, "time_resolved"): {
-        "it":1, "nT":24
-    },
 
-    (2772, 0.1, "averaged"): {
-        "it":1, "nT":24
-    },
-    (2772, 0.1, "time_resolved"): {
-        "it":1, "nT":24
-    },
-    (2772, 0.5, "time_resolved"): {
-        "it":1, "nT":24
-    },
+#    (2772, 0.1, "averaged"): {
+#        "it":1, "nT":24
+#    },
+#    (2772, 0.1, "time_resolved"): {
+#        "it":1, "nT":24
+#    },
+#    (2772, 0.1, "time_resolved"): {
+#        "it":1, "nT":24
+#    },
 
-    (10296, 0.5, "time_resolved"): {
-        "it":1, "nT":24
-    },
+#    (10296, 0.1, "time_resolved"): {
+#        "it":1, "nT":24
+#    },
 }
