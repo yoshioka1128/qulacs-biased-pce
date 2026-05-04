@@ -10,14 +10,14 @@ def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian
     verbose = config.verbose
     LEARN = config.learn
     USE_BACKPROP = config.backprop
-    mode = config.mode
-    USE_BIAS = (mode != "nobias")
+    bias_mode = config.bias_mode
+    USE_BIAS = (bias_mode != "nobias")
 
     loss_history = [h[1] for h in history]
     exp_history  = [h[2] for h in history]
     alpha = alphasc * n_qubits ** np.floor(k / 2)
     bit_history  = [
-        get_binary_solution(n_nodes, h[0], ansatz, hamiltonian, n_qubits, mode, alpha)
+        get_binary_solution(n_nodes, h[0], ansatz, hamiltonian, n_qubits, bias_mode, alpha)
         for h in history
     ]
     if USE_BIAS: bias_history = [h[3] for h in history]
@@ -61,7 +61,7 @@ def save_results_fast(output_dir, result, history, dJ, dhex, ansatz, hamiltonian
     if LEARN == 0:
         suffix = []
         if USE_BACKPROP: suffix.append("backprop")
-        if mode != "nobias": suffix.append(mode)
+        if bias_mode != "nobias": suffix.append(bias_mode)
         suffix = "_" + "_".join(suffix) if suffix else ""
 
 #        str_backprop = ''

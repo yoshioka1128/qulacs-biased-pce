@@ -4,16 +4,19 @@ import os
 import numpy as np
 from pathlib import Path
 from collections import defaultdict
-from src.config.node_config import NODE_CONFIG
+from src.config.pipeline_config import PIPELINE_CONFIG
+from src.config.full_config import FullConfig
 
 pattern = re.compile(
     r"alphasc(?P<alpha>[-\d\.]+)_beta(?P<beta>[-\d\.]+)_init(?P<init>\d+)"
 )
 
 def get_result_file_from_node_config(
+    cfg: FullConfig,
     nodes: int,
     rate: float,
-    mode: str,
+    model: str,
+    bias_mode: str,
     method: str,
     iseed: int,
     type_ansatz: str = "all2all",
@@ -21,17 +24,11 @@ def get_result_file_from_node_config(
     nT: int = 24,
     readmode: bool = False,
 ):
-    """
-    NODE_CONFIG を使って
-    results json を一意に取得する
-    """
 
-    key = (nodes, rate, mode)
+    key = (nodes, rate, model)
 
-    if key not in NODE_CONFIG:
-        raise ValueError(f"NODE_CONFIG not found: {key}")
-
-    cfg = NODE_CONFIG[key]
+    if key not in PIPELINE_CONFIG:
+        raise ValueError(f"PIPELINE_CONFIG not found: {key}")
 
     alphasc = cfg.alphasc
     beta = cfg.beta
@@ -42,15 +39,14 @@ def get_result_file_from_node_config(
     ninit = cfg.ninit
     strbp = cfg.strbp
 
-#    suffix = f"{strbp}_{mode}"
-    if mode == "nobias":
+    if bias_mode == "nobias":
         suffix = strbp
-    elif mode == "bias_x":
+    elif bias_mode == "bias_x":
         suffix = f"{strbp}_bias_x"
-    elif mode == "bias_y":
+    elif bias_mode == "bias_y":
         suffix = f"{strbp}_bias_y"
     else:
-        raise ValueError(f"unknown mode: {mode}")
+        raise ValueError(f"unknown bias_mode: {bias_mode}")
 
     if readmode:
         read_dir = (
@@ -184,7 +180,7 @@ def build_result_record(
     alphasc = meta["alphasc"]
     beta = meta["beta"]
     init = meta["init"]
-    mode = meta["mode"]
+    bias_mode = meta["bias_mode"]
     backprop = meta["backprop"]
 
     # legacy互換:
@@ -195,7 +191,7 @@ def build_result_record(
         "nodes": nodes,
         "qubits": qubits,
         "body": body,
-        "mode": mode,
+        "bias_mode": bias_mode,
         "alpha": alpha,
         "alphasc": alphasc,
         "beta": beta,

@@ -18,16 +18,16 @@ def parse_result_filename(best_file: str):
     metadata = metadata.replace(".json", "")
 
     # -----------------------------------------
-    # mode / backprop 判定
+    # bias_mode / backprop 判定
     # -----------------------------------------
     backprop = "True" if "_backprop" in metadata else "False"
 
     if "_bias_x_" in metadata:
-        mode = "bias_x"
+        bias_mode = "bias_x"
     elif "_bias_y_" in metadata:
-        mode = "bias_y"
+        bias_mode = "bias_y"
     else:
-        mode = "nobias"
+        bias_mode = "nobias"
 
     # -----------------------------------------
     # alphasc / beta / init
@@ -51,7 +51,7 @@ def parse_result_filename(best_file: str):
         ) from e
 
     return {
-        "mode": mode,
+        "bias_mode": bias_mode,
         "backprop": backprop,
         "alphasc": alphasc,
         "beta": beta,

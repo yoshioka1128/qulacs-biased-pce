@@ -10,26 +10,26 @@ from src.infra.input_handler import setup_output_dirs
 from src.infra.result_handler import save_results_fast
 from pce import pauli_correlation_encode, show_observable
 from src.core.optimizer import read_optimize_fast
-from src.config.node_config import NODE_CONFIG
+from src.config.full_config import build_config
 from src.analysis.loader import get_result_file_from_node_config
 from gurobi_energy_mathopt.data_loader import load_selected_originals, load_gurobi_results
 
 def run(config, args):
-    node_cfg = NODE_CONFIG[args.m, args.rate, args.mode]
+    cfg = build_config(args.m, args.rate, args.model, args.bias_mode)
 
-    alphasc = args.alphasc if args.alphasc is not None else node_cfg.alphasc
-    beta = args.beta if args.beta is not None else node_cfg.beta
+    alphasc = args.alphasc if args.alphasc is not None else cfg.alphasc
+    beta = args.beta if args.beta is not None else cfg.beta
 
     params = {
         "m": args.m,
-        "n_qubits": args.n_qubits or node_cfg.n_qubits,
-        "k": args.k or node_cfg.k,
-        "depth": args.depth or node_cfg.depth,
+        "n_qubits": args.n_qubits or cfg.n_qubits,
+        "k": args.k or cfg.k,
+        "depth": args.depth or cfg.depth,
         "type_ansatz": args.type_ansatz,
         "itime": args.itime,
         "nT": args.nT,
         "rate": args.rate,
-        "mode": args.mode,
+        "bias_mode": args.bias_mode,
 #        "bias": args.bias,
         "alphasc": alphasc,
         "beta": beta,
@@ -39,11 +39,11 @@ def run(config, args):
         params["nT"] = 1
 
     if args.batch:
-        run_batch(config, node_cfg, params)
+        run_batch(config, cfg, params)
     else:
-        run_single(config, node_cfg, params)
+        run_single(config, cfg, params)
 
-def run_batch(config, node_cfg, params):
+def run_batch(config, cfg, params):
     beta_list = [-0.1, 0.0, 0.1, 0.2]
     alpha_list = [0.1, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
 #    alpha_list = [4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]
@@ -55,9 +55,9 @@ def run_batch(config, node_cfg, params):
         batch_params["alphasc"] = alphasc
         batch_params["beta"] = beta
 
-        run_single(config, node_cfg, batch_params)
+        run_single(config, cfg, batch_params)
 
-def run_single(config, node_cfg, params):
+def run_single(config, cfg, params):
     n_qubits = params["n_qubits"]
     depth = params["depth"]
     type_ansatz = params["type_ansatz"]
@@ -74,7 +74,7 @@ def run_single(config, node_cfg, params):
     depth = params["depth"]
     type_ansatz = params["type_ansatz"]
 
-    mode = params["mode"]
+    bias_mode = params["bias_mode"]
 
     alphasc = params["alphasc"]
     beta = params["beta"]
@@ -100,11 +100,11 @@ def run_single(config, node_cfg, params):
     # readmode
     if config.readmode:
         ninit2 = 1
-        iinit = node_cfg.iinit
+        iinit = cfg.iinit
 
         suffix = []
         if config.backprop: suffix.append("backprop")
-        if mode != "nobias": suffix.append(mode)
+        if bias_mode != "nobias": suffix.append(bias_mode)
         suffix = "_" + "_".join(suffix) if suffix else ""
 
 #        read_dir = (f'outputs/power_opt/time1_nT24_rate{rate}_{m}nodes_{n_qubits}qubits_{k}body_'
@@ -114,7 +114,7 @@ def run_single(config, node_cfg, params):
 #            f"results{suffix}_alphasc{alphasc}_beta{beta}_init{iinit}.json"
 #        )
         read_dir, read_file = get_result_file_from_node_config(
-            m, rate, mode, node_cfg.method, node_cfg.iseed, node_cfg.type_ansatz,
+            m, rate, bias_mode, cfg.method, cfg.iseed, cfg.type_ansatz,
         )
         dst_file = os.path.join(output_dir, os.path.basename(read_file))
         print('copy from', read_file, 'to', dst_file)
@@ -165,7 +165,7 @@ def run_single(config, node_cfg, params):
 
             for beta in betas:
                 for iinit in range(ninit2):
-                    init_para = sample_init(config.readmode, mode, rng, ansatz.get_parameter_count(), init_para)
+                    init_para = sample_init(config.readmode, bias_mode, rng, ansatz.get_parameter_count(), init_para)
                     result, history, elapsed_time = read_optimize_fast(
                         init_para, config, dJ, dhex, n_qubits, k, ansatz,
                         pce, alphasc, beta, Cmin, Cmax, frob_norm, shift, iinit, output_dir,

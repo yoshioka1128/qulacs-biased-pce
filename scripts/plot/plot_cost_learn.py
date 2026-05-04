@@ -1,0 +1,82 @@
+import argparse
+from pathlib import Path
+import matplotlib.pyplot as plt
+
+from src.analysis.loader import load_data
+from scripts.plot.plot_core import plot_cost, DEFAULT_BETAS
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument("--m", type=int, default=18, help="problem size")
+    parser.add_argument("--bias_mode", choices=["no_bias", "bias_x", "bias_y", "all"], default="all",
+                        help="plot target bias_mode")
+    parser.add_argument("--rate", type=float, default=0.1, help="rate of target pwower")
+    parser.add_argument("--mode", choices=["mean", "min", "band"], default="band",
+                        help="aggregation mode")
+    args = parser.parse_args()
+    rate = args.rate
+    file_map = {
+        18: f"time1_nT24_rate{rate}_18nodes_4qubits_2body_ninit5_depth5_all2all_methodBFGS_iseed42",
+        60: f"time1_nT24_rate{rate}_60nodes_6qubits_3body_ninit5_depth5_all2all_methodBFGS_iseed42",
+        210: f"time1_nT24_rate{rate}_210nodes_8qubits_4body_ninit5_depth5_all2all_methodBFGS_iseed42",
+        756: f"time1_nT24_rate{rate}_756nodes_10qubits_5body_ninit5_depth5_all2all_methodBFGS_iseed42",
+        2772: f"time1_nT24_rate{rate}_2772nodes_12qubits_6body_ninit5_depth5_all2all_methodBFGS_iseed42",
+    }
+
+    BASE_DIR = Path(__file__).resolve().parents[2]
+    file = file_map[args.m]
+
+    DATA_DIR = BASE_DIR / "outputs" / "power_opt" / file
+    SAVE_DIR = BASE_DIR / "outputs" / "power_opt" / "figures"
+    SAVE_DIR.mkdir(parents=True, exist_ok=True)
+
+    # --- load ---
+    cost_nb, loss_nb = load_data(DATA_DIR, use_bias=False)
+    cost_wb, loss_wb = load_data(DATA_DIR, use_bias=True)
+
+    aggregation = args.mode
+
+    # =============================
+    # ① 手法比較
+    # =============================
+    plot_cost(
+        cost_nb,
+        cost_wb,
+        DEFAULT_BETAS,
+        aggregation=aggregation,
+        save_path=SAVE_DIR / "pdf" / f"cost_{aggregation}_cost_method.pdf",
+        loss_nb=loss_nb,
+        loss_wb=loss_wb,
+        mode="method",
+    )
+
+    # =============================
+    # ② β色分け（モデル指定）
+    # =============================
+    if args.bias_mode == "all":
+        bias_modes = ["bias_x", "bias_y", "no_bias"]
+    else:
+        bias_modes = [args.bias_mode]
+
+    for bias_mode in bias_modes:
+        plot_cost(
+            cost_nb,
+            cost_wb,
+            DEFAULT_BETAS,
+            aggregation=aggregation,
+            save_path=SAVE_DIR / "pdf" / f"cost_{aggregation}_cost_{bias_mode}.pdf",
+            loss_nb=loss_nb,
+            loss_wb=loss_wb,
+            mode="beta",
+            bias_mode=bias_mode,
+        )
+
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()
+    

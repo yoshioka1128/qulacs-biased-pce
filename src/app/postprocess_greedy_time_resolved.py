@@ -4,10 +4,11 @@ import os
 import json
 import csv
 import traceback
+import pandas as pd
 
 from collections import defaultdict
-
-from src.config.node_config import NODE_CONFIG
+from src.config.full_config import build_config
+from src.config.model_config import MODEL_CONFIG
 from src.analysis.loader import (
     get_result_file_from_node_config,
     load_result_json,
@@ -28,7 +29,7 @@ method = "BFGS"
 type_ansatz = "all2all"
 
 # 実行対象
-MODES = ["nobias", "bias_x", "bias_y"]
+BIAS_MODES = ["nobias", "bias_x", "bias_y"]
 
 # time resolved 用
 IT_START = 11
@@ -56,25 +57,25 @@ def build_norm_function(record, shift):
 def run_greedy_postprocess(
     nodes: int,
     rate: float,
-    mode: str,
+    bias_mode: str,
+    model: str,
     it: int,
 ):
-    key = (nodes, rate, mode)
+    key = (nodes, rate, bias_mode)
 
-    if key not in NODE_CONFIG:
+    if key not in MODEL_CONFIG:
         print(f"[skip] config not found: {key}")
         return None
 
-    cfg = NODE_CONFIG[key]
+    cfg = build_config(nodes, rate, model, bias_mode)
 
-    # =====================================================
-    # NODE_CONFIG から result file を一意に取得
-    # =====================================================
     try:
         target_dir, result_file = get_result_file_from_node_config(
+            cfg,
             nodes=nodes,
             rate=rate,
-            mode=mode,
+            model=model,
+            bias_mode=bias_mode,
             method=method,
             iseed=iseed,
             type_ansatz=type_ansatz,
@@ -85,14 +86,14 @@ def run_greedy_postprocess(
     except Exception as e:
         print(
             f"[skip] result file not found: "
-            f"nodes={nodes}, mode={mode}, error={e}"
+            f"nodes={nodes}, bias_mode={bias_mode}, error={e}"
         )
         return None
 
     print("\n=== processing ===")
     print(f"nodes={nodes}")
     print(f"rate={rate}")
-    print(f"mode={mode}")
+    print(f"bias_mode={bias_mode}")
     print(f"it={it}")
     print(f"result_file={result_file}")
 
@@ -185,7 +186,7 @@ def run_greedy_postprocess(
         "cost_wo_pp": record["cost w/o pp"],
         "cost": norm(cost_local),
         "loss": norm(record["loss"]),
-        "mode": mode,
+        "bias_mode": bias_mode,
     }
 
 
@@ -194,38 +195,40 @@ def run_greedy_postprocess(
 # =========================================================
 
 def main():
+    model = "time_resolved"
     results_by_mode_rate = defaultdict(list)
 
     for it in range(IT_START, IT_END + 1):
-        for (nodes, rate, mode), _cfg in NODE_CONFIG.items():
-            if mode not in MODES:
+        for (nodes, rate, bias_mode) in MODEL_CONFIG.keys():
+            if bias_mode not in BIAS_MODES:
                 continue
 
             try:
                 result = run_greedy_postprocess(
                     nodes=nodes,
                     rate=rate,
-                    mode=mode,
+                    model=model,
+                    bias_mode=bias_mode,
                     it=it,
                 )
 
                 if result is not None:
-                    results_by_mode_rate[(mode, rate)].append(result)
+                    results_by_mode_rate[(bias_mode, rate)].append(result)
 
             except Exception:
                 print(
                     f"[error] nodes={nodes}, "
-                    f"rate={rate}, mode={mode}, it={it}"
+                    f"rate={rate}, bias_mode={bias_mode}, it={it}"
                 )
                 traceback.print_exc()
 
     # =====================================================
-    # mode + rate ごとに CSV 保存
+    # bias_mode + rate ごとに CSV 保存
     # =====================================================
-    for (mode, rate), rows in results_by_mode_rate.items():
+    for (bias_mode, rate), rows in results_by_mode_rate.items():
         csv_path = os.path.join(
             "outputs/power_opt/csv",
-            f"pce_greedy_time_resolved_summary_rate{rate}_{mode}.csv"
+            f"pce_greedy_time_resolved_summary_rate{rate}_{bias_mode}.csv"
         )
 
         with open(csv_path, "w", newline="") as csvfile:

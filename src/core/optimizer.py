@@ -17,13 +17,13 @@ def read_optimize_fast(
         iinit, output_dir,
 ):
     # ---- config ----
-    mode = config.mode
+    bias_mode = config.bias_mode
     method = config.method
     verbose = config.verbose
     USE_BACKPROP = config.backprop
     maxiter = config.maxiter
-    USE_BIAS = (mode != "nobias")
-#    reg_type = None if mode == "nobias" else mode[-1]
+    USE_BIAS = (bias_mode != "nobias")
+#    reg_type = None if bias_mode == "nobias" else bias_mode[-1]
 #    reg = "" if reg_type is None else f"_reg_type{reg_type}"
 #    reg_type = config.reg_type
 #    if USE_BIAS: reg = f'_reg_type{reg_type}'
@@ -48,7 +48,7 @@ def read_optimize_fast(
     # =========================
     # Loss / Gradient
     # =========================
-    if mode == "bias_x":
+    if bias_mode == "bias_x":
 #        if reg_type == 'x':
         def loss_fn(params):
             theta, bias = split_params(params)
@@ -72,7 +72,7 @@ def read_optimize_fast(
                 nu=1.0,
             )
             return grad.flatten()
-    elif mode == "bias_y":
+    elif bias_mode == "bias_y":
 #        elif reg_type == 'y':
         def loss_fn(params):
             theta, bias = split_params(params)
@@ -127,7 +127,7 @@ def read_optimize_fast(
 
     suffix = []
     if USE_BACKPROP: suffix.append("backprop")
-    if mode != "nobias": suffix.append(mode)
+    if bias_mode != "nobias": suffix.append(bias_mode)
     suffix = "_" + "_".join(suffix) if suffix else ""
 
     csv_path = f"{output_dir}/energy_progress{suffix}_alphasc{alphasc}_beta{beta}_init{iinit}.csv"
@@ -250,28 +250,6 @@ def read_optimize_fast(
 
 
 def greedy_ising(J, h, z0=None):
-    """
-    Apply a greedy spin-flip algorithm to the Ising model (J, h).
-    Spins are treated directly as z ∈ {-1, +1}.
-
-    Parameters
-    ----------
-    J : ndarray (N, N)
-        Symmetric interaction matrix (diagonal elements assumed to be 0)
-    h : ndarray (N,)
-        Local magnetic field
-    z0 : ndarray (N,), optional
-        Initial spin configuration (elements can be ±1 or 0).
-        If 0, the value is first greedily assigned to -1 or +1.
-        If None, all spins are initialized to +1.
-
-    Returns
-    -------
-    z : ndarray (N,)
-        Final spin configuration (±1)
-    E : float
-        Final energy
-    """
     N = len(h)
 
     # Initialize spins
