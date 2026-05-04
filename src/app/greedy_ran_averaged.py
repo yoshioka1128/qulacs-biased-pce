@@ -1,8 +1,10 @@
-# src/app/postprocess_greedy_allzero.py
-
 import os
 import traceback
 import pandas as pd
+import numpy as np
+from pathlib import Path
+import csv
+import json
 from src.config.full_config import build_config
 from src.config.pipeline_config import PIPELINE_CONFIG
 
@@ -11,7 +13,6 @@ from src.core.utils import prepare_int_from_d
 from src.core.optimizer import greedy_ising
 from gurobi_energy_mathopt.data_loader import load_selected_originals, load_gurobi_result_row
 
-
 # =========================================================
 # settings
 # =========================================================
@@ -19,7 +20,6 @@ it = 1
 nT = 24
 iseed = 42
 
-# ★ 固定（normalize取得用）
 DUMMY_BIAS_MODE = "nobias"
 
 def build_norm_function(Cmin, Cmax, frob_norm, shift):
@@ -29,7 +29,13 @@ def build_norm_function(Cmin, Cmax, frob_norm, shift):
     return norm
 
 
-def run_greedy_allzero(nodes: int, rate: float, pipeline: str):
+def one_sample(nodes, dJ_sym, dhex, seed, norm):
+    x0 = generate_spin("random", nodes, seed=seed)
+    _, cost = greedy_ising(dJ_sym, dhex, x0)
+    return norm(cost), x0
+
+def run_greedy_random(nodes: int, rate: float, pipeline: str, nsample: int = 1000, iran: int = 42):
+
     key = (nodes, rate, pipeline)
 
     if key not in PIPELINE_CONFIG:
@@ -38,14 +44,10 @@ def run_greedy_allzero(nodes: int, rate: float, pipeline: str):
 
     cfg = build_config(nodes, rate, pipeline, DUMMY_BIAS_MODE)
 
-    # =====================================================
-    # normalize取得（量子結果は使わない）
-    # =====================================================
+    # ===== normalize =====
     Cmin, Cmax, frob_norm = load_gurobi_result_row(nT, nodes, rate, iseed, it)
 
-    # =====================================================
-    # Ising構築
-    # =====================================================
+    # ===== Ising =====
     df_selected = load_selected_originals(nodes, iseed)
     if df_selected is None:
         print("[skip] csv not found")
@@ -61,43 +63,76 @@ def run_greedy_allzero(nodes: int, rate: float, pipeline: str):
         rate,
     )
 
-    # =====================================================
-    # ★ all-1 初期解
-    # =====================================================
-    x = generate_spin('allzero', nodes)
-
     dJ_sym = dJ + dJ.T
-
-    x_local, cost_local = greedy_ising(dJ_sym, dhex, x)
-
-#    norm = build_norm_function(record, shift)
     norm = build_norm_function(Cmin, Cmax, frob_norm, shift)
+
+    # ===== sampling =====
+    results = [
+        one_sample(nodes, dJ_sym, dhex, i + iran, norm)
+        for i in range(nsample)
+    ]
+
+    eng = np.array([r[0] for r in results])
+    x_ite = [r[1] for r in results]
+
+    mineng = eng.min()
+#    meaneng = eng.mean()
+    meaneng = np.mean(eng)
+    stdeng  = np.std(eng)
+
+    # ===== 出力 =====
+    output_dir = f"outputs/power_opt/greedy_optimized/nT{nT}_rate{rate}_{nodes}nodes"
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+    # --- JSON（summary） ---
+    data = {
+        "Calculated Minimum Energy [norm, row, mean, row]": [
+            float(mineng),
+            float(meaneng),
+        ],
+        "Solution for Minimum Energy": x_ite[int(np.argmin(eng))].tolist(),
+    }
+
+    with open(
+        f"{output_dir}/greedyran_nsample{nsample}_iran{iran}_time{it}_nT{nT}_rate{rate}_{nodes}nodes_iseed{iseed}.json",
+        "w"
+    ) as f:
+        json.dump(data, f, indent=2)
+
+    # --- CSV（最重要：legacy互換） ---
+    csv_path = f"{output_dir}/sampling_greedyran_nsample{nsample}_iran{iran}_time{it}_nT{nT}_rate{rate}_{nodes}nodes_iseed{iseed}.csv"
+
+    with open(csv_path, "w", newline="\n") as f:
+        writer = csv.writer(f, lineterminator="\n")
+        writer.writerow(eng)   # ← これが完全一致ポイント
+
+    print(f"[done] nodes={nodes}, mean={meaneng:.4f}, min={mineng:.4f}")
 
     return {
         "nodes": nodes,
         "rate": rate,
-        "cost": norm(cost_local),
+        "mean": float(meaneng),
+        "std": float(stdeng),
     }
 
 
-# =========================================================
 def main():
     results = []
 
     for (nodes, rate, pipeline) in PIPELINE_CONFIG.keys():
         if pipeline != "averaged":
             continue
-
         print(nodes, rate, pipeline)
 
         try:
-            result = run_greedy_allzero(nodes, rate, pipeline)
+            result = run_greedy_random(nodes, rate, pipeline, nsample=1000)
 
             if result:
                 results.append({
                     "nodes": nodes,
                     "rate": rate,
-                    "cost": result["cost"],
+                    "cost": result["mean"],   # ← 平均
+                    "std": result["std"],     # ← 追加
                 })
 
         except Exception:
@@ -107,19 +142,18 @@ def main():
     # ===== DataFrame化 =====
     df = pd.DataFrame(results)
 
-    # （任意）並び替え：見やすく＆後処理しやすい
+    # 並び替え
     df = df.sort_values(["rate", "nodes"])
 
     # ===== CSV保存 =====
     csv_path = os.path.join(
         "outputs/power_opt/csv",
-        "greedy_allzero_averaged_summary_all.csv"
+        "greedy_random_averaged_summary_all.csv"
     )
 
     df.to_csv(csv_path, index=False)
 
     print(f"saved -> {csv_path}")
-
 
 if __name__ == "__main__":
     main()
