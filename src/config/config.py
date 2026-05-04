@@ -12,7 +12,7 @@ class Config:
     verbose: int = 0
     maxiter: int = 10000
     readmode: bool = False
-    mode: str = "nobias"
+    bias_mode: str = "nobias"
     backprop: bool = True
     reg_type: str = "x"   # "x": tanh(\alpha<\P_i>+b)^2 or "y": tanh(\alpha<\P_i>)^2
 

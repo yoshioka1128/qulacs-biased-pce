@@ -4,12 +4,12 @@ import os
 import json
 import csv
 import traceback
+import pandas as pd
 
 from collections import defaultdict
 
 from src.config.full_config import build_config
-from src.config.node_config import NODE_CONFIG
-from src.config.problem_config import PROBLEM_CONFIG
+from src.config.pipeline_config import PIPELINE_CONFIG
 from src.analysis.loader import (
     get_result_file_from_node_config,
     load_result_json,
@@ -18,7 +18,7 @@ from src.analysis.loader import (
 from src.analysis.parser import parse_result_filename
 from src.core.utils import prepare_int_from_d
 from src.core.optimizer import greedy_ising
-from gurobi_energy_mathopt.data_loader import load_selected_originals
+from gurobi_energy_mathopt.data_loader import load_selected_originals, load_gurobi_result_row
 
 
 # =========================================================
@@ -37,10 +37,7 @@ IT_START = 11
 IT_END = 20
 NT = 1
 
-
-def build_norm_function(record, shift):
-    Cmin, Cmax, frob_norm, _ = record["normalize"]
-
+def build_norm_function(Cmin, Cmax, frob_norm, shift):
     def norm(raw_cost):
         return (raw_cost * frob_norm + shift - Cmin) / (Cmax - Cmin)
 
@@ -49,7 +46,7 @@ def build_norm_function(record, shift):
 def run_greedy_allzero_postprocess(nodes: int, rate: float, model: str, it: int):
     key = (nodes, rate, model)
 
-    if key not in PROBLEM_CONFIG:
+    if key not in PIPELINE_CONFIG:
         print(f"[skip] config not found: {key}")
         return
 
@@ -65,7 +62,7 @@ def run_greedy_allzero_postprocess(nodes: int, rate: float, model: str, it: int)
             nodes=nodes,
             rate=rate,
             model=model,
-            mode=DUMMY_MODE,
+            bias_mode=DUMMY_MODE,
             method=method,
             iseed=iseed,
             type_ansatz=type_ansatz,
@@ -80,16 +77,17 @@ def run_greedy_allzero_postprocess(nodes: int, rate: float, model: str, it: int)
         )
         return None
 
-    meta = parse_result_filename(result_file)
-    data = load_result_json(result_file)
-    record = build_result_record(
-        meta=meta,
-        data=data,
-        nodes=nodes,
-        qubits=cfg.n_qubits,
-        body=cfg.k,
-        best_file=result_file,
-    )
+    Cmin, Cmax, frob_norm = load_gurobi_result_row(nT=1, m=nodes, rate=rate, iseed=iseed, it=it)
+#    meta = parse_result_filename(result_file)
+#    data = load_result_json(result_file)
+#    record = build_result_record(
+#        meta=meta,
+#        data=data,
+#        nodes=nodes,
+#        qubits=cfg.n_qubits,
+#        body=cfg.k,
+#        best_file=result_file,
+#    )
 
     print("\n=== processing ===")
     print(f"nodes={nodes}")
@@ -138,7 +136,8 @@ def run_greedy_allzero_postprocess(nodes: int, rate: float, model: str, it: int)
         x,
     )
 
-    norm = build_norm_function(record, shift)
+#    norm = build_norm_function(record, shift)
+    norm = build_norm_function(Cmin, Cmax, frob_norm, shift)
 
     result_data = {
         "Calculated Minimum Energy [norm, raw]": [
@@ -171,48 +170,51 @@ def run_greedy_allzero_postprocess(nodes: int, rate: float, model: str, it: int)
 # main
 # =========================================================
 def main():
-    results_by_rate = defaultdict(list)
+    results = []
 
     for it in range(IT_START, IT_END + 1):
-        for (nodes, rate, model) in PROBLEM_CONFIG.keys():
+        for (nodes, rate, model) in PIPELINE_CONFIG.keys():
             if model != "time_resolved":
                 continue
+
             try:
-                result = run_greedy_allzero_postprocess(nodes, rate, model, it=it)
+                result = run_greedy_allzero_postprocess(
+                    nodes, rate, model, it=it
+                )
+
                 if result is not None:
-                    results_by_rate[rate].append(result)
+                    # ★ フラットに保存
+                    results.append({
+                        "nodes": nodes,
+                        "rate": rate,
+                        "it": it,
+                        "cost": result["cost"],
+                    })
 
             except Exception:
                 print(f"[error] nodes={nodes}, rate={rate}, model={model}, it={it}")
                 traceback.print_exc()
 
-    # =====================================================
-    # mode + rate ごとに CSV 保存
-    # =====================================================
-    for rate, rows in results_by_rate.items():
-        csv_path = os.path.join(
-            "outputs/power_opt/csv",
-            f"greedy_time_resolved_summary_rate{rate}.csv"
-        )
+    # ===== DataFrame化 =====
+    df = pd.DataFrame(results)
 
-        with open(csv_path, "w", newline="") as csvfile:
-            writer = csv.writer(csvfile, lineterminator="\n")
+    # 空チェック（地味に重要）
+    if df.empty:
+        print("No data to save.")
+        return
 
-            writer.writerow([
-                "nodes",
-                "it",
-                "cost",
-            ])
+    # （おすすめ）並び替え
+    df = df.sort_values(["rate", "nodes", "it"])
 
-            for row in rows:
-                writer.writerow([
-                    row["nodes"],
-                    row["it"],
-                    row["cost"],
-                ])
+    # ===== CSV保存（1ファイル）=====
+    csv_path = os.path.join(
+        "outputs/power_opt/csv",
+        "greedy_time_resolved_summary_all.csv"
+    )
 
-        print(f"saved -> {csv_path}")
+    df.to_csv(csv_path, index=False)
 
+    print(f"saved -> {csv_path}")
 
 if __name__ == "__main__":
     main()

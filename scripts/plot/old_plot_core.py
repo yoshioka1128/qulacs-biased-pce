@@ -11,11 +11,11 @@ beta_marker_map = {
     0.2: "D",
 }
 
-def make_label(mode, model, label_prefix, beta, suffix=None):
+def make_label(mode, bias_mode, label_prefix, beta, suffix=None):
     if mode == "method":
         base = f"{label_prefix}, beta={beta}"
     else:
-        base = f"{model}, beta={beta}"
+        base = f"{bias_mode}, beta={beta}"
 
     return f"{base} {suffix}" if suffix else base
 
@@ -30,7 +30,7 @@ def compute_stats(vals):
 
 def build_datasets(
     mode,
-    model,
+    bias_mode,
     cost_nb,
     cost_wb,
     loss_nb,
@@ -78,30 +78,30 @@ def build_datasets(
             0.2: "C3",
         }
 
-        if model == "no_bias":
+        if bias_mode == "no_bias":
             e_dict = cost_nb
             l_dict = loss_nb
             reg_type = "no_reg"
 
-        elif model == "bias_x":
+        elif bias_mode == "bias_x":
             e_dict = cost_wb
             l_dict = loss_wb
             reg_type = "x"
 
-        elif model == "bias_y":
+        elif bias_mode == "bias_y":
             e_dict = cost_wb
             l_dict = loss_wb
             reg_type = "y"
 
         else:
-            raise ValueError(f"Unknown model: {model}")
+            raise ValueError(f"Unknown bias_mode: {bias_mode}")
 
         datasets = []
 
         for beta in target_betas:
             datasets.append(
                 (
-                    model,
+                    bias_mode,
                     e_dict,
                     l_dict,
                     reg_type,
@@ -156,7 +156,7 @@ def plot_cost(
         loss_nb=None,
         loss_wb=None,
         mode="method",
-        model="no_bias",
+        bias_mode="nobias",
         close_fig=False,
 ):
 
@@ -164,7 +164,7 @@ def plot_cost(
 
     datasets = build_datasets(
         mode=mode,
-        model=model,
+        bias_mode=bias_mode,
         cost_nb=cost_nb,
         cost_wb=cost_wb,
         loss_nb=loss_nb,
@@ -194,7 +194,7 @@ def plot_cost(
             # cost
             # =====================
 
-            label = make_label(mode, model, label_prefix, beta)
+            label = make_label(mode, bias_mode, label_prefix, beta)
 
             if aggregation == "band":
 
@@ -244,7 +244,7 @@ def plot_cost(
 
                 loss_label = make_label(
                     mode,
-                    model,
+                    bias_mode,
                     label_prefix,
                     beta,
                     suffix="loss",

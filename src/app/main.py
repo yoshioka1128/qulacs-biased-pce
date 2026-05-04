@@ -12,8 +12,8 @@ def parse_args():
     parser.add_argument("--batch", action="store_true", help="run in batch mode")
     parser.add_argument("--model", type=str, choices=["averaged", "time_rosolved"], default="averaged",
                         help="select model")
-    parser.add_argument("--mode", type=str, choices=["nobias", "bias_x", "bias_y"], default="nobias",
-                        help="regularization mode")
+    parser.add_argument("--bias_mode", type=str, choices=["nobias", "bias_x", "bias_y"], default="nobias",
+                        help="bias mode in regularization")
     parser.add_argument("--readmode", action="store_true", help="read existing result files")
     parser.add_argument("--itime", type=int, default=1, help="time for start")
     parser.add_argument("--nT", type=int, default=24, help="number of time steps")
@@ -35,7 +35,7 @@ def main():
         args.itime = 11
 
     config = Config(
-        mode=args.mode,
+        bias_mode=args.bias_mode,
         readmode=args.readmode,
     )
     run(config, args)

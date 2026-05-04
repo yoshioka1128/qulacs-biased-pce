@@ -16,8 +16,8 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument("--m", type=int, default=18, help="problem size")
-    parser.add_argument("--model", choices=["nobias", "bias_x", "bias_y", "all"], default="all",
-                        help="plot target model")
+    parser.add_argument("--bias_mode", choices=["nobias", "bias_x", "bias_y", "all"], default="all",
+                        help="plot target bias_mode")
     parser.add_argument("--rate", type=float, default=0.1, help="rate of target pwower")
     parser.add_argument("--mode", choices=["mean", "min", "band"], default="band",
                         help="aggregation mode")
@@ -46,13 +46,13 @@ def main():
 
     rates = [0.1, 0.5]
 
-    if args.model == "all":
-        models = ["bias_x", "bias_y", "nobias"]
+    if args.bias_mode == "all":
+        bias_modes = ["bias_x", "bias_y", "nobias"]
     else:
-        models = [args.model]
+        bias_modes = [args.bias_mode]
 
     nrows = len(rates)
-    ncols = len(models)
+    ncols = len(bias_modes)
 
     fig, axes = plt.subplots(
         nrows=nrows,
@@ -86,7 +86,7 @@ def main():
         cost_nb, loss_nb = load_data(DATA_DIR, use_bias=False)
         cost_wb, loss_wb = load_data(DATA_DIR, use_bias=True)
 
-        for j, model in enumerate(models):
+        for j, bias_mode in enumerate(bias_modes):
 
             ax = axes[i][j]
 
@@ -99,7 +99,7 @@ def main():
     #            loss_nb=loss_nb,
     #            loss_wb=loss_wb,
                 mode="beta",
-                model=model,
+                bias_mode=bias_mode,
                 show_label=(i == 0 and j == 0),
                 add_legend=(i == 0 and j == 0),   # ← 左上だけ
                 xmin=0.25,
@@ -108,9 +108,9 @@ def main():
 
             # タイトル
             if i == 0:
-                collabel = model
-                if model == 'bias_y': collabel = "OB-PCE"
-                elif model == 'nobias': collabel = "PCE"                
+                collabel = bias_mode
+                if bias_mode == 'bias_y': collabel = "OB-PCE"
+                elif bias_mode == 'nobias': collabel = "PCE"                
                 ax.set_title(f"{collabel}")
 
             if j == 0:

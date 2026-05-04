@@ -1,7 +1,10 @@
-# src/config/problem_config.py
+# src/config/pipeline_config.py
 
-PROBLEM_CONFIG = {
+PIPELINE_CONFIG = {
     (18, 0.1, "averaged"): {
+        "it":1, "nT":24
+    },
+    (18, 0.5, "averaged"): {
         "it":1, "nT":24
     },
     (18, 0.1, "time_resolved"): {
@@ -11,11 +14,17 @@ PROBLEM_CONFIG = {
     (60, 0.1, "averaged"): {
         "it":1, "nT":24
     },
+    (60, 0.5, "averaged"): {
+        "it":1, "nT":24
+    },
     (60, 0.1, "time_resolved"): {
         "it":1, "nT":24
     },
 
     (210, 0.1, "averaged"): {
+        "it":1, "nT":24
+    },
+    (210, 0.5, "averaged"): {
         "it":1, "nT":24
     },
     (210, 0.1, "time_resolved"): {
@@ -50,6 +59,9 @@ PROBLEM_CONFIG = {
         "it":1, "nT":24
     },
     (756, 0.4, "time_resolved"): {
+        "it":1, "nT":24
+    },
+    (756, 0.5, "time_resolved"): {
         "it":1, "nT":24
     },
 

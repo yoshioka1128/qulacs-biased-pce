@@ -11,8 +11,8 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument("--m", type=int, default=18, help="problem size")
-    parser.add_argument("--model", choices=["no_bias", "bias_x", "bias_y", "all"], default="all",
-                        help="plot target model")
+    parser.add_argument("--bias_mode", choices=["no_bias", "bias_x", "bias_y", "all"], default="all",
+                        help="plot target bias_mode")
     parser.add_argument("--rate", type=float, default=0.1, help="rate of target pwower")
     parser.add_argument("--mode", choices=["mean", "min", "band"], default="band",
                         help="aggregation mode")
@@ -56,22 +56,22 @@ def main():
     # =============================
     # ② β色分け（モデル指定）
     # =============================
-    if args.model == "all":
-        models = ["bias_x", "bias_y", "no_bias"]
+    if args.bias_mode == "all":
+        bias_modes = ["bias_x", "bias_y", "no_bias"]
     else:
-        models = [args.model]
+        bias_modes = [args.bias_mode]
 
-    for model in models:
+    for bias_mode in bias_modes:
         plot_cost(
             cost_nb,
             cost_wb,
             DEFAULT_BETAS,
             aggregation=aggregation,
-            save_path=SAVE_DIR / "pdf" / f"cost_{aggregation}_cost_{model}.pdf",
+            save_path=SAVE_DIR / "pdf" / f"cost_{aggregation}_cost_{bias_mode}.pdf",
             loss_nb=loss_nb,
             loss_wb=loss_wb,
             mode="beta",
-            model=model,
+            bias_mode=bias_mode,
         )
 
     plt.show()

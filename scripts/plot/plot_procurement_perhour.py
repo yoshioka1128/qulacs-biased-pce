@@ -22,18 +22,18 @@ nodes = int(input('node数を入力してください (756): ') or 756)
 rate = float(input('rate (0.1): ') or 0.1)
 algo = str(input('algo [pce, greedy, gurobi] (pce): ') or 'pce')
 if algo == 'pce':
-    mode = str(input('mode [nobias, bias_x, bias_y] (bias_y): ') or 'bias_y')
-    if mode == "nobias": str_mode = ""
-    else: str_mode = f"{mode}_"
+    bias_mode = str(input('bias_mode [nobias, bias_x, bias_y] (bias_y): ') or 'bias_y')
+    if bias_mode == "nobias": str_bias_mode = ""
+    else: str_bias_mode = f"{bias_mode}_"
 
     choice = input('Greedy method y/n ? (y):') or 'y'
     greedy = (choice=='y')
     if greedy: str_greedy="greedy_"
     else: str_greedy = ""
 else:
-    mode = 'nobias'
+    bias_mode = 'nobias'
 
-node_cfg = NODE_CONFIG[nodes, 0.1, mode]
+node_cfg = NODE_CONFIG[nodes, 0.1, bias_mode]
 n_qubits = node_cfg.n_qubits
 k = node_cfg.k
 depth = node_cfg.depth
@@ -59,7 +59,7 @@ consumer_lists = []
 if algo == 'pce':
     for time in time_list:
         output_pce = f"outputs/power_opt/time{time}_nT1_rate{rate}_{nodes}nodes_{n_qubits}qubits_{k}body_ninit{ninit}_depth{depth}_all2all_methodBFGS_iseed{iseed}/read"
-        results_ws_json_file = f"{output_pce}/pce_{str_greedy}time_resolved_it{time}_results_backprop_{str_mode}alphasc{alphasc}_beta{beta}_init0.json"
+        results_ws_json_file = f"{output_pce}/pce_{str_greedy}time_resolved_it{time}_results_backprop_{str_bias_mode}alphasc{alphasc}_beta{beta}_init0.json"
         with open(results_ws_json_file, "r") as f:
             results_ws = json.load(f)
         solution_ws = results_ws["Solution for Minimum Energy"]
@@ -157,7 +157,7 @@ output_df_ws = pd.DataFrame({
 
 if algo == "pce":
     file_suffix = (
-        f"_pce_{str_greedy}{str_mode}"
+        f"_pce_{str_greedy}{str_bias_mode}"
         f"{nodes}nodes_rate{rate}_iseed{iseed}"
     )
 elif algo == "greedy":

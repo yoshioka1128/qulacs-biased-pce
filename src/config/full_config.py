@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 from typing import Optional, List
 from src.config.node_config import NODE_CONFIG
-from src.config.problem_config import PROBLEM_CONFIG
-from src.config.experiment_config import EXPERIMENT_CONFIG
+from src.config.pipeline_config import PIPELINE_CONFIG
+from src.config.model_config import MODEL_CONFIG
 
 @dataclass
 class FullConfig:
@@ -31,9 +31,9 @@ class FullConfig:
     chbetaiinit: Optional[List[int]] = None
     betas: Optional[List[float]] = None
 
-def build_config(node, rate, model, mode):
+def build_config(node, rate, model, bias_mode):
     node_cfg = NODE_CONFIG[node]
-    prob_cfg = PROBLEM_CONFIG[node, rate, model]
-    exp_cfg  = EXPERIMENT_CONFIG[node, rate, mode]
+    pipe_cfg = PIPELINE_CONFIG[node, rate, model]
+    model_cfg  = MODEL_CONFIG[node, rate, bias_mode]
 
-    return FullConfig(**node_cfg, **prob_cfg, **exp_cfg) #, **prob_cfg, **exp_cfg)
+    return FullConfig(**node_cfg, **pipe_cfg, **model_cfg) 

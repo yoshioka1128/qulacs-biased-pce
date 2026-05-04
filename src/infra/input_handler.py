@@ -8,12 +8,12 @@ def setup_output_dirs(config, mode_str, it, nT, rate, m, type_ansatz, n_qubits, 
     ninit = config.ninit
     method = config.method
     iseed = config.iseed
-    mode = config.mode
+    bias_mode = config.bias_mode
     
     if LEARN:
         output_dir = f'outputs_learning/time{it}_nT{nT}_rate{rate}_nprob{nprob}_ninit{ninit}_{type_ansatz}_method{method}_iseed{iseed}/'
         os.makedirs(output_dir, exist_ok=True)
-        csvfile = f'learning_{m}nodes_{n_qubits}qubits_{k}body_depth{depth}_{mode}_iseed{iseed}.csv'
+        csvfile = f'learning_{m}nodes_{n_qubits}qubits_{k}body_depth{depth}_{bias_mode}_iseed{iseed}.csv'
         csvpath = os.path.join(output_dir, csvfile)
         file_exists = os.path.isfile(csvpath)
         with open(csvpath, mode='a', newline='', encoding="utf-8") as f:

@@ -15,7 +15,7 @@ from src.analysis.loader import get_result_file_from_node_config
 from gurobi_energy_mathopt.data_loader import load_selected_originals, load_gurobi_results
 
 def run(config, args):
-    cfg = build_config(args.m, args.rate, args.model, args.mode)
+    cfg = build_config(args.m, args.rate, args.model, args.bias_mode)
 
     alphasc = args.alphasc if args.alphasc is not None else cfg.alphasc
     beta = args.beta if args.beta is not None else cfg.beta
@@ -29,7 +29,7 @@ def run(config, args):
         "itime": args.itime,
         "nT": args.nT,
         "rate": args.rate,
-        "mode": args.mode,
+        "bias_mode": args.bias_mode,
 #        "bias": args.bias,
         "alphasc": alphasc,
         "beta": beta,
@@ -74,7 +74,7 @@ def run_single(config, cfg, params):
     depth = params["depth"]
     type_ansatz = params["type_ansatz"]
 
-    mode = params["mode"]
+    bias_mode = params["bias_mode"]
 
     alphasc = params["alphasc"]
     beta = params["beta"]
@@ -104,7 +104,7 @@ def run_single(config, cfg, params):
 
         suffix = []
         if config.backprop: suffix.append("backprop")
-        if mode != "nobias": suffix.append(mode)
+        if bias_mode != "nobias": suffix.append(bias_mode)
         suffix = "_" + "_".join(suffix) if suffix else ""
 
 #        read_dir = (f'outputs/power_opt/time1_nT24_rate{rate}_{m}nodes_{n_qubits}qubits_{k}body_'
@@ -114,7 +114,7 @@ def run_single(config, cfg, params):
 #            f"results{suffix}_alphasc{alphasc}_beta{beta}_init{iinit}.json"
 #        )
         read_dir, read_file = get_result_file_from_node_config(
-            m, rate, mode, cfg.method, cfg.iseed, cfg.type_ansatz,
+            m, rate, bias_mode, cfg.method, cfg.iseed, cfg.type_ansatz,
         )
         dst_file = os.path.join(output_dir, os.path.basename(read_file))
         print('copy from', read_file, 'to', dst_file)
@@ -165,7 +165,7 @@ def run_single(config, cfg, params):
 
             for beta in betas:
                 for iinit in range(ninit2):
-                    init_para = sample_init(config.readmode, mode, rng, ansatz.get_parameter_count(), init_para)
+                    init_para = sample_init(config.readmode, bias_mode, rng, ansatz.get_parameter_count(), init_para)
                     result, history, elapsed_time = read_optimize_fast(
                         init_para, config, dJ, dhex, n_qubits, k, ansatz,
                         pce, alphasc, beta, Cmin, Cmax, frob_norm, shift, iinit, output_dir,
