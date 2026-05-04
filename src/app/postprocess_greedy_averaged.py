@@ -49,23 +49,24 @@ def build_norm_function(record, shift):
 def run_greedy_postprocess(
     nodes: int,
     rate: float,
-    model: str,
+    pipeline: str,
     bias_mode: str
 ):
     key = (nodes, rate, bias_mode)
+    print('key', key)
 
     if key not in MODEL_CONFIG:
         print(f"[skip] config not found: {key}")
         return
 
-    cfg = build_config(nodes, rate, model, bias_mode)
+    cfg = build_config(nodes, rate, pipeline, bias_mode)
 
     try:
         _, result_file = get_result_file_from_node_config(
             cfg,
             nodes=nodes,
             rate=rate,
-            model=model,
+            pipeline=pipeline,
             bias_mode=bias_mode,
             method=method,
             iseed=iseed,
@@ -160,11 +161,12 @@ def run_greedy_postprocess(
 # main
 # =========================================================
 def main():
-    model = "averaged"
+    pipeline = "averaged"
 
     results = []
 
     for (nodes, rate, bias_mode) in MODEL_CONFIG.keys():
+        print(nodes, rate, bias_mode)
         if bias_mode not in BIAS_MODES:
             continue
 
@@ -172,7 +174,7 @@ def main():
             result = run_greedy_postprocess(
                 nodes=nodes,
                 rate=rate,
-                model=model,
+                pipeline=pipeline,
                 bias_mode=bias_mode,
             )
 
@@ -188,7 +190,7 @@ def main():
         except Exception:
             print(
                 f"[error] nodes={nodes}, "
-                f"rate={rate}, model={model}, bias_mode={bias_mode}"
+                f"rate={rate}, pipeline={pipeline}, bias_mode={bias_mode}"
             )
             traceback.print_exc()
 

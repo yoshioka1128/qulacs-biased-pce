@@ -7,11 +7,6 @@ from collections import defaultdict
 from src.config.full_config import build_config
 from src.config.pipeline_config import PIPELINE_CONFIG
 
-from src.analysis.loader import (
-    get_result_file_from_node_config,
-    load_result_json,
-    build_result_record,
-)
 from src.core.spin_init import generate_spin
 from src.analysis.parser import parse_result_filename
 from src.core.utils import prepare_int_from_d
@@ -38,48 +33,19 @@ def build_norm_function(Cmin, Cmax, frob_norm, shift):
     return norm
 
 
-def run_greedy_allzero(nodes: int, rate: float, model: str):
-    key = (nodes, rate, model)
+def run_greedy_allzero(nodes: int, rate: float, pipeline: str):
+    key = (nodes, rate, pipeline)
 
     if key not in PIPELINE_CONFIG:
         print(f"[skip] config not found: {key}")
         return
 
-    cfg = build_config(nodes, rate, model, DUMMY_BIAS_MODE)
+    cfg = build_config(nodes, rate, pipeline, DUMMY_BIAS_MODE)
 
     # =====================================================
     # normalize取得（量子結果は使わない）
     # =====================================================
     Cmin, Cmax, frob_norm = load_gurobi_result_row(nT, nodes, rate, iseed, it)
-
-#    try:
-#        _, result_file = get_result_file_from_node_config(
-#            cfg,
-#            nodes=nodes,
-#            rate=rate,
-#            model=model,
-#            bias_mode=DUMMY_BIAS_MODE,
-#            method=method,
-#            iseed=iseed,
-#            type_ansatz=type_ansatz,
-#        )
-#    except Exception as e:
-#        print(
-#            f"[skip] result file not found:"
-#            f"nodes={nodes}, rate={rate}, model:{model}, error={e}"
-#        )
-#        return
-#
-#    meta = parse_result_filename(result_file)
-#    data = load_result_json(result_file)
-#    record = build_result_record(
-#        meta=meta,
-#        data=data,
-#        nodes=nodes,
-#        qubits=cfg.n_qubits,
-#        body=cfg.k,
-#        best_file=result_file,
-#    )
 
     # =====================================================
     # Ising構築
@@ -126,14 +92,14 @@ def run_greedy_allzero(nodes: int, rate: float, model: str):
 def main():
     results = []
 
-    for (nodes, rate, model) in PIPELINE_CONFIG.keys():
-        if model != "averaged":
+    for (nodes, rate, pipeline) in PIPELINE_CONFIG.keys():
+        if pipeline != "averaged":
             continue
 
-        print(nodes, rate, model)
+        print(nodes, rate, pipeline)
 
         try:
-            result = run_greedy_allzero(nodes, rate, model)
+            result = run_greedy_allzero(nodes, rate, pipeline)
 
             if result:
                 results.append({
@@ -143,7 +109,7 @@ def main():
                 })
 
         except Exception:
-            print(f"[error] nodes={nodes}, rate={rate}, model={model}")
+            print(f"[error] nodes={nodes}, rate={rate}, pipeline={pipeline}")
             traceback.print_exc()
 
     # ===== DataFrame化 =====

@@ -58,7 +58,7 @@ def run_greedy_postprocess(
     nodes: int,
     rate: float,
     bias_mode: str,
-    model: str,
+    pipeline: str,
     it: int,
 ):
     key = (nodes, rate, bias_mode)
@@ -67,14 +67,14 @@ def run_greedy_postprocess(
         print(f"[skip] config not found: {key}")
         return None
 
-    cfg = build_config(nodes, rate, model, bias_mode)
+    cfg = build_config(nodes, rate, pipeline, bias_mode)
 
     try:
         target_dir, result_file = get_result_file_from_node_config(
             cfg,
             nodes=nodes,
             rate=rate,
-            model=model,
+            pipeline=pipeline,
             bias_mode=bias_mode,
             method=method,
             iseed=iseed,
@@ -86,7 +86,7 @@ def run_greedy_postprocess(
     except Exception as e:
         print(
             f"[skip] result file not found: "
-            f"nodes={nodes}, bias_mode={bias_mode}, error={e}"
+            f"nodes={nodes}, rate={rate}, pipeline:{pipeline}, bias_mode={bias_mode}, error={e}"
         )
         return None
 
@@ -193,10 +193,10 @@ def run_greedy_postprocess(
 # =========================================================
 # main
 # =========================================================
-
 def main():
-    model = "time_resolved"
-    results_by_mode_rate = defaultdict(list)
+    pipeline = "time_resolved"
+
+    results = []
 
     for it in range(IT_START, IT_END + 1):
         for (nodes, rate, bias_mode) in MODEL_CONFIG.keys():
@@ -207,13 +207,22 @@ def main():
                 result = run_greedy_postprocess(
                     nodes=nodes,
                     rate=rate,
-                    model=model,
+                    pipeline=pipeline,
                     bias_mode=bias_mode,
                     it=it,
                 )
 
                 if result is not None:
-                    results_by_mode_rate[(bias_mode, rate)].append(result)
+                    # ★ フラットに保存
+                    results.append({
+                        "nodes": nodes,
+                        "rate": rate,
+                        "bias_mode": bias_mode,
+                        "it": it,
+                        "cost_wo_pp": result["cost_wo_pp"],
+                        "cost": result["cost"],
+                        "loss": result["loss"],
+                    })
 
             except Exception:
                 print(
@@ -222,37 +231,39 @@ def main():
                 )
                 traceback.print_exc()
 
-    # =====================================================
-    # bias_mode + rate ごとに CSV 保存
-    # =====================================================
-    for (bias_mode, rate), rows in results_by_mode_rate.items():
-        csv_path = os.path.join(
-            "outputs/power_opt/csv",
-            f"pce_greedy_time_resolved_summary_rate{rate}_{bias_mode}.csv"
-        )
+    # ===== DataFrame化 =====
+    df = pd.DataFrame(results)
 
-        with open(csv_path, "w", newline="") as csvfile:
-            writer = csv.writer(csvfile, lineterminator="\n")
+    # 空チェック
+    if df.empty:
+        print("No data to save.")
+        return
 
-            writer.writerow([
-                "nodes",
-                "it",
-                "cost_wo_pp",
-                "cost",
-                "loss",
-            ])
+    # （おすすめ）並び替え
+    df = df.sort_values(["bias_mode", "rate", "nodes", "it"])
 
-            for row in rows:
-                writer.writerow([
-                    row["nodes"],
-                    row["it"],
-                    row["cost_wo_pp"],
-                    row["cost"],
-                    row["loss"],
-                ])
+    # 列順を固定（見やすさ・事故防止）
+    df = df[
+        [
+            "nodes",
+            "rate",
+            "bias_mode",
+            "it",
+            "cost_wo_pp",
+            "cost",
+            "loss",
+        ]
+    ]
 
-        print(f"saved -> {csv_path}")
+    # ===== CSV保存（1ファイル）=====
+    csv_path = os.path.join(
+        "outputs/power_opt/csv",
+        "pce_greedy_time_resolved_summary_all.csv"
+    )
 
+    df.to_csv(csv_path, index=False)
+
+    print(f"saved -> {csv_path}")
 
 if __name__ == "__main__":
     main()
