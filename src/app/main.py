@@ -10,6 +10,8 @@ def parse_args():
 
     parser.add_argument("--m", type=int, default=60, help="problem size")
     parser.add_argument("--batch", action="store_true", help="run in batch mode")
+    parser.add_argument("--model", type=str, choices=["averaged", "time_rosolved"], default="averaged",
+                        help="select model")
     parser.add_argument("--mode", type=str, choices=["nobias", "bias_x", "bias_y"], default="nobias",
                         help="regularization mode")
     parser.add_argument("--readmode", action="store_true", help="read existing result files")
