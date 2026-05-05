@@ -1,8 +1,8 @@
 import numpy as np
-
+from param_enemane.data_loader import BASE_DIR_PARAM
 
 def load_covariance(hour, str_large=""):
-    file = f"param-enemane/param/covariance_matrix_time{hour:02d}_mixup_restricted{str_large}.npz"
+    file = f"{BASE_DIR_PARAM}/param/covariance_matrix_time{hour:02d}_mixup_restricted{str_large}.npz"
 
     with np.load(file, allow_pickle=True) as data:
         cov_matrix = data["cov"]

@@ -1,10 +1,10 @@
 import pandas as pd
 import numpy as np
+from param_enemane.data_loader import load_power_data
 
-
-def load_power_dataframe(str_large=""):
-    file = f"param-enemane/param/power_consumption_hourly_mixup_restricted{str_large}.csv"
-    return pd.read_csv(file)
+def load_power_dataframe(L):
+#    file = f"param-enemane/param/power_consumption_hourly_mixup_restricted{str_large}.csv"
+    return load_power_data(L) #pd.read_csv(file)
 
 
 def build_proc_vector(df_power, consumer_list, nodes, rate):

@@ -22,18 +22,19 @@ from gurobi_energy_mathopt.data_loader import (
 
 from src.domain.power.data_loader import PowerDataLoader
 from src.analysis.aggregator import evaluate_solution
-
+from joblib import Parallel, delayed
 
 # =========================================================
 # settings
 # =========================================================
+itst = int(input('it_start (11-20)') or 11)
 nT = 1
 iseed = 42
 DUMMY_BIAS_MODE = "nobias"
 
 # time resolved 用
-IT_START = 11
-IT_END = 20
+IT_START = itst
+IT_END = IT_START + 1
 NT = 1
 
 def build_norm_function(Cmin, Cmax, frob_norm, shift):
@@ -97,10 +98,19 @@ def run_greedy_random_time_resolved(
         norm = build_norm_function(Cmin, Cmax, frob_norm, shift)
 
         # ===== sampling =====
-        results = [
-            one_sample(nodes, dJ_sym, dhex, i + iran, norm)
-            for i in range(nsample)
-        ]
+        results = []
+        for i in range(nsample):
+            print(i)
+            results.append(one_sample(nodes, dJ_sym, dhex, i + iran, norm))
+
+#        results = [
+#            one_sample(nodes, dJ_sym, dhex, i + iran, norm)
+#            for i in range(nsample)
+#        ]
+#        results = Parallel(n_jobs=25, backend="loky")(
+#            delayed(one_sample)(nodes, dJ_sym, dhex, i + iran, norm)
+#            for i in range(nsample)
+#        )
 
         eng = np.array([r[0] for r in results])
         x_ite = [r[1] for r in results]
@@ -115,19 +125,20 @@ def run_greedy_random_time_resolved(
         dev_list = []
         cv_list = []
 
-        for sol in x_ite:
+        for i, sol in enumerate(x_ite):
+            print(i)
             var, dev, Ptot = evaluate_solution(it, sol, loader)
 
-            var_list.append(var)
+            cv_list.append(np.sqrt(var)/Ptot)
             dev_list.append(dev)
 
-            if Ptot != 0:
-                cv_list.append(np.sqrt(var) / Ptot)
+#            if Ptot != 0:
+#                cv_list.append(np.sqrt(var) / Ptot)
 
-        var_mean = float(np.mean(var_list))
-        var_std = float(np.std(var_list))
+#        var_mean = float(np.mean(var_list))
+#        var_std = float(np.std(var_list))
 
-        dev_mean = float(np.mean(dev_list))
+        dev_mean = float(np.mean(dev_list)) # deviation
         dev_std = float(np.std(dev_list))
 
         cv_mean = float(np.mean(cv_list)) if len(cv_list) > 0 else 0.0
@@ -155,16 +166,17 @@ def run_greedy_random_time_resolved(
                 "mean": dev_mean,
                 "std": dev_std,
             },
-            "var": {
-                "mean": var_mean,
-                "std": var_std,
-            },
+#            "var": {
+#                "mean": var_mean,
+#                "std": var_std,
+#            },
             "cv": {
                 "mean": cv_mean,
                 "std": cv_std,
             },
             "best_solution": x_ite[int(np.argmin(eng))].tolist(),
         }
+        print(it, dev_mean,"(", dev_std, ")", cv_mean, "(", cv_std, ")")
 
         with open(
             f"{output_dir}/greedyran_time{it}_nsample{nsample}_iran{iran}_rate{rate}_{nodes}nodes.json",
@@ -174,14 +186,14 @@ def run_greedy_random_time_resolved(
 
         results_per_hour.append({
             "hour": it,
-            "cost_mean": meaneng,
-            "cost_std": stdeng,
             "dev_mean": dev_mean,
             "dev_std": dev_std,
-            "var_mean": var_mean,
-            "var_std": var_std,
+#            "var_mean": var_mean,
+#            "var_std": var_std,
             "cv_mean": cv_mean,
             "cv_std": cv_std,
+            "cost_mean": meaneng,
+            "cost_std": stdeng,
         })
 
     return results_per_hour
@@ -217,7 +229,7 @@ def main():
 
     csv_path = os.path.join(
         "outputs/power_opt/csv",
-        "greedy_random_time_resolved_summary_all.csv"
+        f"greedy_random_time_resolved_summary_all_itst{itst}.csv"
     )
 
     df.to_csv(csv_path, index=False)

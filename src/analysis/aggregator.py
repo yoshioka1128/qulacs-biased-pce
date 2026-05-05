@@ -8,9 +8,7 @@ from gurobi_energy_mathopt.data_loader import BASE_DIR_GUROBI
 def evaluate_solution(hour, solution, loader):
     sol = (np.array(solution) != 1).astype(np.float64)
 
-    Pvec = loader.get_power(hour)
-    cov  = loader.get_cov(hour)
-    target = loader.get_proc_at(hour)
+    cov, Pvec, _, target = loader.get_aligned_data(hour)
 
     var = (sol @ cov @ sol) / (1000 * 10)**2
     Ptot = sol @ Pvec
