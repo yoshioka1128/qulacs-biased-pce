@@ -209,7 +209,7 @@ def main():
     # ===== CSV保存（1ファイル）=====
     csv_path = os.path.join(
         "outputs/power_opt/csv",
-        "greedy_time_resolved_summary_all.csv"
+        "greedy_allzero_time_resolved_summary_all.csv"
     )
 
     df.to_csv(csv_path, index=False)

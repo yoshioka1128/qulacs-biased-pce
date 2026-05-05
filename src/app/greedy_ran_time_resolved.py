@@ -27,14 +27,16 @@ from joblib import Parallel, delayed
 # =========================================================
 # settings
 # =========================================================
-itst = int(input('it_start (11-20)') or 11)
+rate0 = float(input('rate (0.1, 0.4): ') or 0.1)
+nsample0 = int(input('nsample (1000): ') or 1000)
+
 nT = 1
 iseed = 42
 DUMMY_BIAS_MODE = "nobias"
 
 # time resolved 用
-IT_START = itst
-IT_END = IT_START + 1
+IT_START = 11
+IT_END = 20
 NT = 1
 
 def build_norm_function(Cmin, Cmax, frob_norm, shift):
@@ -45,7 +47,7 @@ def build_norm_function(Cmin, Cmax, frob_norm, shift):
 
 def one_sample(nodes, dJ_sym, dhex, seed, norm):
     x0 = generate_spin("random", nodes, seed=seed)
-    _, cost = greedy_ising(dJ_sym, dhex, x0)
+    x0, cost = greedy_ising(dJ_sym, dhex, x0)
     return norm(cost), x0
 
 
@@ -100,7 +102,7 @@ def run_greedy_random_time_resolved(
         # ===== sampling =====
         results = []
         for i in range(nsample):
-            print(i)
+            print('sampling', i)
             results.append(one_sample(nodes, dJ_sym, dhex, i + iran, norm))
 
 #        results = [
@@ -126,7 +128,7 @@ def run_greedy_random_time_resolved(
         cv_list = []
 
         for i, sol in enumerate(x_ite):
-            print(i)
+            print('evaluate:', i)
             var, dev, Ptot = evaluate_solution(it, sol, loader)
 
             cv_list.append(np.sqrt(var)/Ptot)
@@ -174,7 +176,7 @@ def run_greedy_random_time_resolved(
                 "mean": cv_mean,
                 "std": cv_std,
             },
-            "best_solution": x_ite[int(np.argmin(eng))].tolist(),
+            "best_solution": x_ite[int(np.argmin(eng))],
         }
         print(it, dev_mean,"(", dev_std, ")", cv_mean, "(", cv_std, ")")
 
@@ -205,13 +207,13 @@ def main():
     for (nodes, rate, pipeline) in PIPELINE_CONFIG.keys():
         if nodes != 756: continue
         if pipeline != "time_resolved": continue
-        if rate not in [0.1, 0.4]: continue
+        if rate != rate0: continue
 
         print(nodes, rate, pipeline)
 
         try:
             results = run_greedy_random_time_resolved(
-                nodes, rate, pipeline, nsample=1000
+                nodes, rate, pipeline, nsample=nsample0
             )
 
             if results:
@@ -229,7 +231,7 @@ def main():
 
     csv_path = os.path.join(
         "outputs/power_opt/csv",
-        f"greedy_random_time_resolved_summary_all_itst{itst}.csv"
+        f"greedy_random_time_resolved_summary_all_rate{rate0}_nsample{nsample0}.csv"
     )
 
     df.to_csv(csv_path, index=False)
