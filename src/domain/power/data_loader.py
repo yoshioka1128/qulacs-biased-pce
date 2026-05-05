@@ -52,7 +52,7 @@ class PowerDataLoader:
         if self._proc is not None:
             return self._proc
 
-        df = load_power_dataframe(self.str_large)
+        df = load_power_dataframe(self.nodes)
 
         self._proc = build_proc_vector(
             df,
@@ -66,22 +66,25 @@ class PowerDataLoader:
     def get_proc_at(self, hour):
         return self.get_proc()[hour - 1]
 
-    def get_cov(self, hour):
-        if hour in self._cov_cache:
-            return self._cov_cache[hour]
+    def get_aligned_data(self, hour):
+        # --- power ---
+        P_series = self._power_dict[hour]
+        Pvec = P_series.loc[self.consumer_list_all].to_numpy()
 
+        # --- covariance ---
         cov_matrix, all_names = load_covariance(hour, self.str_large)
 
-        key = tuple(all_names)
-        if key not in self._idx_cache:
-            self._idx_cache[key] = build_index_map(
-                all_names,
-                self.consumer_list_all
-            )
+        name_to_idx = {name: i for i, name in enumerate(all_names)}
 
-        idx = self._idx_cache[key]
-        sub_cov = extract_sub_covariance(cov_matrix, idx)
+        missing = [c for c in self.consumer_list_all if c not in name_to_idx]
+        if missing:
+            raise ValueError(f"Missing in covariance: {missing[:5]} ...")
 
-        self._cov_cache[hour] = sub_cov
-        return sub_cov
+        idx = np.array([name_to_idx[c] for c in self.consumer_list_all])
+
+        sub_cov = cov_matrix[np.ix_(idx, idx)]
+
+        target = self.get_proc_at(hour)
+
+        return sub_cov, Pvec, idx, target
 
