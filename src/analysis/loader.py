@@ -15,7 +15,7 @@ def get_result_file_from_node_config(
     cfg: FullConfig,
     nodes: int,
     rate: float,
-    model: str,
+    pipeline: str,
     bias_mode: str,
     method: str,
     iseed: int,
@@ -25,7 +25,7 @@ def get_result_file_from_node_config(
     readmode: bool = False,
 ):
 
-    key = (nodes, rate, model)
+    key = (nodes, rate, pipeline)
 
     if key not in PIPELINE_CONFIG:
         raise ValueError(f"PIPELINE_CONFIG not found: {key}")

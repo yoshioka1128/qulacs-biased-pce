@@ -31,9 +31,9 @@ class FullConfig:
     chbetaiinit: Optional[List[int]] = None
     betas: Optional[List[float]] = None
 
-def build_config(node, rate, model, bias_mode):
+def build_config(node, rate, pipeline, bias_mode):
     node_cfg = NODE_CONFIG[node]
-    pipe_cfg = PIPELINE_CONFIG[node, rate, model]
+    pipe_cfg = PIPELINE_CONFIG[node, rate, pipeline]
     model_cfg  = MODEL_CONFIG[node, rate, bias_mode]
 
     return FullConfig(**node_cfg, **pipe_cfg, **model_cfg) 

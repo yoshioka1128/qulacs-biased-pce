@@ -43,14 +43,14 @@ def build_norm_function(Cmin, Cmax, frob_norm, shift):
 
     return norm
 
-def run_greedy_allzero_postprocess(nodes: int, rate: float, model: str, it: int):
-    key = (nodes, rate, model)
+def run_greedy_allzero_postprocess(nodes: int, rate: float, pipeline: str, it: int):
+    key = (nodes, rate, pipeline)
 
     if key not in PIPELINE_CONFIG:
         print(f"[skip] config not found: {key}")
         return
 
-    cfg = build_config(nodes, rate, model, DUMMY_MODE)
+    cfg = build_config(nodes, rate, pipeline, DUMMY_MODE)
 
     # =====================================================
     # 保存先 directory を取得
@@ -61,7 +61,7 @@ def run_greedy_allzero_postprocess(nodes: int, rate: float, model: str, it: int)
             cfg,
             nodes=nodes,
             rate=rate,
-            model=model,
+            pipeline=pipeline,
             bias_mode=DUMMY_MODE,
             method=method,
             iseed=iseed,
@@ -73,7 +73,7 @@ def run_greedy_allzero_postprocess(nodes: int, rate: float, model: str, it: int)
     except Exception as e:
         print(
             f"[skip] result file not found: "
-            f"nodes={nodes}, rate={rate}, model{model}, it={it}, error={e}"
+            f"nodes={nodes}, rate={rate}, pipeline{pipeline}, it={it}, error={e}"
         )
         return None
 
@@ -173,13 +173,13 @@ def main():
     results = []
 
     for it in range(IT_START, IT_END + 1):
-        for (nodes, rate, model) in PIPELINE_CONFIG.keys():
-            if model != "time_resolved":
+        for (nodes, rate, pipeline) in PIPELINE_CONFIG.keys():
+            if pipeline != "time_resolved":
                 continue
 
             try:
                 result = run_greedy_allzero_postprocess(
-                    nodes, rate, model, it=it
+                    nodes, rate, pipeline, it=it
                 )
 
                 if result is not None:
@@ -192,7 +192,7 @@ def main():
                     })
 
             except Exception:
-                print(f"[error] nodes={nodes}, rate={rate}, model={model}, it={it}")
+                print(f"[error] nodes={nodes}, rate={rate}, pipeline={pipeline}, it={it}")
                 traceback.print_exc()
 
     # ===== DataFrame化 =====

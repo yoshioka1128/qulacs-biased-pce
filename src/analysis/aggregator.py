@@ -5,15 +5,18 @@ import pandas as pd
 from param_enemane.data_loader import BASE_DIR_PARAM
 from gurobi_energy_mathopt.data_loader import BASE_DIR_GUROBI
 
-def aggregate(values, mode="mean"):
-    if mode == "mean":
-        return np.mean(values)
-    elif mode == "min":
-        return np.min(values)
-    elif mode == "median":
-        return np.median(values)
-    else:
-        raise ValueError(f"Unknown mode: {mode}")
+def evaluate_solution(hour, solution, loader):
+    sol = (np.array(solution) != 1).astype(np.float64)
+
+    Pvec = loader.get_power(hour)
+    cov  = loader.get_cov(hour)
+    target = loader.get_proc_at(hour)
+
+    var = (sol @ cov @ sol) / (1000 * 10)**2
+    Ptot = sol @ Pvec
+    dev = np.abs(Ptot / 1000 / 10 - target)
+
+    return var, dev, Ptot
 
 def process_covariance_file(
     file,

@@ -30,24 +30,6 @@ def qubo_cost_from_x(x, consumer_list, hour, nT, rate, large_str):
 
     return quad_term + mse_term, np.abs(mse_term), quad_term, mean
 
-def model_solution_to_decimal(model, L, lsb_at_index0=True):
-    """model.__data に {i: Var} として入っている前提。
-    lsb_at_index0=True のとき、ビット i は 2**i の重み（LSB=index0）。"""
-    if getattr(model, "SolCount", 0) <= 0:
-        raise RuntimeError("モデルに解がありません。先に optimize() を実行してください。")
-
-    w = model.__data  # {i: Var}
-    bits = np.array([int(round(w[i].X)) for i in range(L)], dtype=int)
-
-    if lsb_at_index0:
-        # number = Σ bits[i] * 2**i
-        number = int(np.sum(bits * (1 << np.arange(L))))
-    else:
-        # bits[0]をMSBとみなす場合はこちら（必要なら切替）
-        number = int("".join(str(b) for b in bits), 2)
-
-    return number, bits
-
 def get_random_consumers(L, rng):
     df = load_power_data(L)
     if L <= 2143:

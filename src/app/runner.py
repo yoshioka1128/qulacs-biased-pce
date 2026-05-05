@@ -15,7 +15,7 @@ from src.analysis.loader import get_result_file_from_node_config
 from gurobi_energy_mathopt.data_loader import load_selected_originals, load_gurobi_results
 
 def run(config, args):
-    cfg = build_config(args.m, args.rate, args.model, args.bias_mode)
+    cfg = build_config(args.m, args.rate, args.pipeline, args.bias_mode)
 
     alphasc = args.alphasc if args.alphasc is not None else cfg.alphasc
     beta = args.beta if args.beta is not None else cfg.beta

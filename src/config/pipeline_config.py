@@ -4,9 +4,9 @@ PIPELINE_CONFIG = {
     (18, 0.1, "averaged"): {
         "it":1, "nT":24
     },
-    (18, 0.5, "averaged"): {
-        "it":1, "nT":24
-    },
+#    (18, 0.5, "averaged"): {
+#        "it":1, "nT":24
+#    },
     (18, 0.1, "time_resolved"): {
         "it":1, "nT":24
     },
@@ -14,9 +14,9 @@ PIPELINE_CONFIG = {
     (60, 0.1, "averaged"): {
         "it":1, "nT":24
     },
-    (60, 0.5, "averaged"): {
-        "it":1, "nT":24
-    },
+#    (60, 0.5, "averaged"): {
+#        "it":1, "nT":24
+#    },
     (60, 0.1, "time_resolved"): {
         "it":1, "nT":24
     },
@@ -24,9 +24,9 @@ PIPELINE_CONFIG = {
     (210, 0.1, "averaged"): {
         "it":1, "nT":24
     },
-    (210, 0.5, "averaged"): {
-        "it":1, "nT":24
-    },
+#    (210, 0.5, "averaged"): {
+#        "it":1, "nT":24
+#    },
     (210, 0.1, "time_resolved"): {
         "it":1, "nT":24
     },
